@@ -245,6 +245,7 @@ namespace StandardViewCreator
                     <attribute name='layoutxml' />
                     <attribute name='name' />
                     <attribute name='querytype' />
+                    <attribute name='isdefault' />
                     <attribute name='returnedtypecode' />
                     <order attribute='returnedtypecode' />
                     <order attribute='querytype' />
