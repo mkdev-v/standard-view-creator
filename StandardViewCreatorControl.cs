@@ -493,16 +493,16 @@ namespace StandardViewCreator
 
                     nodes.Reset();
                     nodes.Columns.Add("Guid");
-                    nodes.Columns.Add("Type");
                     nodes.Columns.Add("Entity");
+                    nodes.Columns.Add("Type");
                     nodes.Columns.Add("QueryType");
                     nodes.Columns.Add("IsDefault");
                     nodes.Columns.Add("Name");
                     nodes.Columns.Add("XmlType");
                     nodes.Columns.Add("NodeURI");
                     nodes.Columns.Add("ParentNode");
-                    nodes.Columns.Add("InnerXml");
                     nodes.Columns.Add("NodeName");
+                    nodes.Columns.Add("InnerXml");
                     nodes.Columns.Add("NodeValue");
                     nodes.Columns.Add("NodeAttributes");
 
@@ -515,6 +515,7 @@ namespace StandardViewCreator
                             Type = entity.LogicalName,
                             Entity = entity.GetAttributeValue<string>("returnedtypecode"),
                             QueryType = GetQueryTypeLabel(entity.GetAttributeValue<int>("querytype")),
+                            IsDefault = entity.GetAttributeValue<bool?>("isdefault"),
                             Name = entity.GetAttributeValue<string>("name"),
                             FetchXml = entity.GetAttributeValue<string>("fetchxml"),
                             LayoutXml = entity.GetAttributeValue<string>("layoutxml"),
@@ -647,15 +648,16 @@ namespace StandardViewCreator
 
             var dr = nodes.NewRow();
             dr["Guid"] = view.Guid;
-            dr["Type"] = view.Type;
             dr["Entity"] = view.Entity;
+            dr["Type"] = view.Type;
             dr["QueryType"] = view.QueryType;
+            dr["IsDefault"] = view.IsDefault;
             dr["Name"] = view.Name;
             dr["XmlType"] = xmlType;
             dr["NodeURI"] = String.Join(".", GetNodePath(node));
             dr["ParentNode"] = node.ParentNode?.LocalName;
-            dr["InnerXml"] = node.InnerXml;
             dr["NodeName"] = node.LocalName;
+            dr["InnerXml"] = node.InnerXml;
             dr["NodeValue"] = ValidateEmptyValue(node.Value);
             dr["NodeAttributes"] = "{" + $"{String.Join(", ", nodeAttributes.Select(s => $"\"{s.Name}\": \"{s.Value}\"").ToArray())}" + "}";
 
