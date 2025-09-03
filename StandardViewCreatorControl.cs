@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.ServiceModel;
@@ -14,6 +15,7 @@ using System.Threading.Tasks;
 using System.Web.Services.Description;
 using System.Web.UI.WebControls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
@@ -28,12 +30,15 @@ using Microsoft.Xrm.Sdk.Query;
 using OfficeOpenXml;
 using OfficeOpenXml.Table;
 using XrmToolBox.Extensibility;
+using StandardViewCreator.Models;
 
 namespace StandardViewCreator
 {
     public partial class StandardViewCreatorControl : PluginControlBase
     {
         private Settings mySettings;
+
+        private DataTable nodes = new DataTable();
 
         public StandardViewCreatorControl()
         {
@@ -58,11 +63,12 @@ namespace StandardViewCreator
             }
 
             tlpViewOptions_cmbType.SelectedIndex = 0;
-            tlpViewOptions_cmbDuplicate.SelectedIndex = 0;
+            tlpViewOptions_cmbOverwrite.SelectedIndex = 0;
             tlpViewOptions_cmbFilter.SelectedIndex = 0;
-            tlpSort_cmbSortValue.SelectedIndex = 0;
+            tlpOrder_cmbOrder.SelectedIndex = 0;
 
-            txtName_tip.SetToolTip(tlpViewOptions_txtName, "Available: {entityLogicalName}, {entityDisplayName}, {yyyyMMdd}");
+            txtName_tip.SetToolTip(tlpViewOptions_lblName, "Available: {entityLogicalName}, {entityDisplayName}, {yyyyMMdd}");
+            cmbDuplicate_tip.SetToolTip(tlpViewOptions_lblOverwrite, "Update mode unavailable. Running in create mode.");
         }
 
 
@@ -126,6 +132,34 @@ namespace StandardViewCreator
             return new EntityCollection();
         }
 
+        private Entity SafeRetrieve(string entityName, Guid guid, ColumnSet columnSet)
+        {
+            try
+            {
+                return Service.Retrieve(entityName, guid, columnSet);
+            }
+            catch (FaultException<OrganizationServiceFault> fault)
+            {
+                // ShowErrorDialog(fault);
+                MessageBox.Show(
+                    $"An error occurred while retrieving data:\n{fault.Detail.Message}",
+                    "CRM Retrieve Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                // ShowErrorDialog(ex);
+                MessageBox.Show(
+                    $"An unexpected error occurred:\n{ex.Message}",
+                    "Unexpected Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+
+            return new Entity();
+        }
+
         private EntityCollection GetSolutions()
         {
             string fetchXml = $@"
@@ -161,12 +195,12 @@ namespace StandardViewCreator
             return SafeRetrieveMultiple(fetchXml);
         }
 
-        private EntityCollection GetUserQuery(bool includeAll, List<EntityInfo> selectedEntities)
+        private EntityCollection GetUserQueryForExport(List<EntityModel> selectedEntities)
         {
-            var filterNode = includeAll ? String.Empty : $@"
+            var filterNode = selectedEntities.Count == 0 ? String.Empty : $@"
             <filter>
               <condition attribute='returnedtypecode' operator='in'>
-                {String.Join("", selectedEntities.Select(s => $"<value>{s.ObjectTypeCode}</value>").ToArray())}
+                {String.Join(String.Empty, selectedEntities.Select(s => $"<value>{s.ObjectTypeCode}</value>").ToArray())}
               </condition>
             </filter>";
 
@@ -187,48 +221,244 @@ namespace StandardViewCreator
             return SafeRetrieveMultiple(fetchXml);
         }
 
-        private EntityCollection GetSavedQuery(bool includeAll, List<EntityInfo> selectedEntities)
+        private List<Entity> GetSavedQueryForExport(List<EntityModel> selectedEntities)
         {
-            var filterNode = includeAll ? String.Empty : $@"
+            var queries = new List<Entity>();
+
+            string pagingCookie = String.Empty;
+            int fetchCount = 5000; 
+            int pageNumber = 1;
+
+            string filterNode = selectedEntities.Count == 0 ? String.Empty : $@"
             <filter>
               <condition attribute='returnedtypecode' operator='in'>
-                {String.Join("", selectedEntities.Select(s => $"<value>{s.ObjectTypeCode}</value>").ToArray())}
+                {String.Join(String.Empty, selectedEntities.Select(s => $"<value>{s.ObjectTypeCode}</value>").ToArray())}
               </condition>
             </filter>";
 
+            while (true)
+            {
+                string fetchXml = $@"
+                <fetch page='{pageNumber}' count='{fetchCount}'>
+                  <entity name='savedquery'>
+                    <attribute name='fetchxml' />
+                    <attribute name='layoutxml' />
+                    <attribute name='name' />
+                    <attribute name='querytype' />
+                    <attribute name='returnedtypecode' />
+                    <order attribute='returnedtypecode' />
+                    <order attribute='querytype' />
+                    <order attribute='name' />
+                    {filterNode}
+                  </entity>
+                </fetch>";
+
+                XElement fetchNode = XElement.Parse(fetchXml);
+                if (!String.IsNullOrEmpty(pagingCookie))
+                {
+                    fetchNode.SetAttributeValue("paging-cookie", pagingCookie);
+                }
+
+                var savedQueries = SafeRetrieveMultiple(fetchNode.ToString());
+
+                if (savedQueries.Entities.Count > 0)
+                {
+                    queries.AddRange(savedQueries.Entities.ToList());
+                }
+
+                if (savedQueries.MoreRecords)
+                {
+                    pageNumber++;
+                    pagingCookie = savedQueries.PagingCookie;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return queries;
+        }
+
+        private EntityCollection GetUserQueryForPick(List<EntityModel> selectedEntities)
+        {
             string fetchXml = $@"
             <fetch>
-              <entity name='savedquery'>
-                <attribute name='fetchxml' />
-                <attribute name='layoutxml' />
+              <entity name='userquery'>
                 <attribute name='name' />
-                <attribute name='querytype' />
                 <attribute name='returnedtypecode' />
                 <order attribute='returnedtypecode' />
                 <order attribute='name' />
-                {filterNode}
+                <filter>
+                  <condition attribute='returnedtypecode' operator='in'>
+                    {String.Join(String.Empty, selectedEntities.Select(s => $"<value>{s.ObjectTypeCode}</value>").ToArray())}
+                  </condition>
+                  <condition attribute='querytype' operator='eq' value='0' />
+                </filter>
               </entity>
             </fetch>";
 
             return SafeRetrieveMultiple(fetchXml);
         }
 
+        private EntityCollection GetSavedQueryForPick(List<EntityModel> selectedEntities)
+        {
+            string fetchXml = $@"
+            <fetch>
+              <entity name='savedquery'>
+                <attribute name='name' />
+                <attribute name='returnedtypecode' />
+                <order attribute='returnedtypecode' />
+                <order attribute='name' />
+                <filter>
+                  <condition attribute='returnedtypecode' operator='in'>
+                    {String.Join(String.Empty, selectedEntities.Select(s => $"<value>{s.ObjectTypeCode}</value>").ToArray())}
+                  </condition>
+                  <condition attribute='querytype' operator='eq' value='0' />
+                </filter>
+              </entity>
+            </fetch>";
+
+            return SafeRetrieveMultiple(fetchXml);
+        }
+
+        private void DuplicateAsPublicView()
+        {
+            DuplicateView(true, false);
+        }
+
+        private void DuplicateAsUserView()
+        {
+            DuplicateView(false, true);
+        }
+
+        private void DuplicateView(bool asPublicView, bool asUserView)
+        {
+            var selectedEntities = GetSelectedEntities();
+
+            if (selectedEntities.Count == 0)
+            {
+                MessageBox.Show("At least one entity must be selected.");
+                return;
+            }
+
+            var queries = new List<Entity>();
+
+            WorkAsync(new WorkAsyncInfo
+            {
+                Message = "Loading views...",
+                Work = (worker, args) =>
+                {
+                    // System views
+                    var savedQueries = GetSavedQueryForPick(selectedEntities);
+
+                    if (savedQueries.Entities.Count > 0)
+                    {
+                        queries.AddRange(savedQueries.Entities.ToList());
+                    }
+
+                    // Personal views
+                    var userQueries = GetUserQueryForPick(selectedEntities);
+
+                    if (userQueries.Entities.Count > 0)
+                    {
+                        queries.AddRange(userQueries.Entities.ToList());
+                    }
+                },
+                PostWorkCallBack = (args) =>
+                {
+                    if (args.Error != null)
+                    {
+                        MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+
+                    if (queries.Count > 0)
+                    {
+                        var items = queries
+                            .Select(s => new ViewModel
+                            {
+                                Guid = s.Id,
+                                Entity = s.GetAttributeValue<string>("returnedtypecode"),
+                                Type = s.LogicalName,
+                                Name = s.GetAttributeValue<string>("name"),
+                            })
+                            .ToList();
+
+                        using (var form = new ViewSelector(items))
+                        {
+                            if (form.ShowDialog() == DialogResult.OK)
+                            {
+                                WorkAsync(new WorkAsyncInfo
+                                {
+                                    Message = "Duplicating view...",
+                                    Work = (worker, args2) =>
+                                    {
+                                        var selected = form.SelectedItem;
+
+                                        var query = SafeRetrieve(selected.Type, selected.Guid, new ColumnSet(true));
+
+                                        if (query.Id == null)
+                                        {
+                                            return;
+                                        }
+
+                                        var create = new Entity()
+                                        {
+                                            ["name"] = query.GetAttributeValue<string>("name"),
+                                            ["fetchxml"] = query.GetAttributeValue<string>("fetchxml"),
+                                            ["layoutxml"] = query.GetAttributeValue<string>("layoutxml"),
+                                            ["returnedtypecode"] = query.GetAttributeValue<string>("returnedtypecode"),
+                                            ["querytype"] = 0,
+                                        };
+
+                                        if (asPublicView)
+                                        {
+                                            create.LogicalName = "savedquery";
+                                            var id = SafeCreate(create);
+                                        }
+
+                                        if (asUserView)
+                                        {
+                                            create.LogicalName = "userquery";
+                                            var id = SafeCreate(create);
+                                        }
+                                    },
+                                    PostWorkCallBack = (args2) =>
+                                    {
+                                        MessageBox.Show("View duplicated.");
+                                    }
+                                });
+                                
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         private void ViewExportAll()
         {
-            ViewExportToExcel(true);
+            DialogResult result = MessageBox.Show("This may take a few seconds.", "Export", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+            if (result == DialogResult.Yes)
+            {
+                ExportToExcel(true);
+            }
         }
 
         private void ViewExportFromSelectedEntities()
         {
-            ViewExportToExcel(false);
+            ExportToExcel(false);
         }
 
-        private void ViewExportToExcel(bool includeAll)
+        private void ExportToExcel(bool includeAll)
         {
-            var selectedEntities = GetSelectedEntities();
+            var selectedEntities = new List<EntityModel>();
 
             if (!includeAll)
             {
+                selectedEntities = GetSelectedEntities();
+
                 if (selectedEntities.Count == 0)
                 {
                     MessageBox.Show("At least one entity must be selected.");
@@ -236,92 +466,61 @@ namespace StandardViewCreator
                 }
             }
 
-            List<ViewInfo> views = new List<ViewInfo>();
-            List<ViewXmlInfo> xmlnodes = new List<ViewXmlInfo>();
+            var views = new List<ViewModel>();
 
             WorkAsync(new WorkAsyncInfo
             {
                 Message = "Loading views...",
                 Work = (worker, args) =>
                 {
-                    var userQueries = GetUserQuery(includeAll, selectedEntities);
-                    var savedQueries = GetSavedQuery(includeAll, selectedEntities);
+                    var queries = new List<Entity>();
 
-                    views = userQueries.Entities.Select(s => new ViewInfo()
+                    // System views: Support for more than 5000 records
+                    var savedQueries = GetSavedQueryForExport(selectedEntities);
+
+                    if (savedQueries.Count > 0)
                     {
-                        Guid = s.Id,
-                        Entity = s.GetAttributeValue<string>("returnedtypecode"),
-                        Type = s.LogicalName,
-                        Name = s.GetAttributeValue<string>("name"),
-                        FetchXml = s.GetAttributeValue<string>("fetchxml"),
-                        LayoutXml = s.GetAttributeValue<string>("layoutxml"),
-                        QueryType = s.GetAttributeValue<int>("querytype"),
-                    }).ToList();
-
-                    views.AddRange(savedQueries.Entities.Select(s => new ViewInfo()
-                    {
-                        Guid = s.Id,
-                        Entity = s.GetAttributeValue<string>("returnedtypecode"),
-                        Type = s.LogicalName,
-                        Name = s.GetAttributeValue<string>("name"),
-                        FetchXml = s.GetAttributeValue<string>("fetchxml"),
-                        LayoutXml = s.GetAttributeValue<string>("layoutxml"),
-                        QueryType = s.GetAttributeValue<int>("querytype"),
-                    }).ToList());
-
-                    foreach (var entity in userQueries.Entities)
-                    {
-                        var baseInfo = new ViewXmlInfo()
-                        {
-                            Guid = entity.Id,
-                            Entity = entity.GetAttributeValue<string>("returnedtypecode"),
-                            Type = entity.LogicalName,
-                            QueryType = entity.GetAttributeValue<int>("querytype"),
-                            Name = entity.GetAttributeValue<string>("name"),
-                        };
-
-                        if (entity.TryGetAttributeValue<string>("fetchxml", out string fetchxml))
-                        {
-                            if (!String.IsNullOrEmpty(fetchxml))
-                            {
-                                var xmlDoc = new XmlDocument();
-                                xmlDoc.LoadXml(fetchxml);
-                                XmlNode root = xmlDoc.DocumentElement;
-
-                                baseInfo.Type = entity.LogicalName + ".fetchxml";
-
-                                ExploreXmlRecursively(root, xmlnodes, baseInfo);
-
-                            }
-                        }
-
-                        if (entity.TryGetAttributeValue<string>("layoutxml", out string layoutxml))
-                        {
-                            if (!String.IsNullOrEmpty(layoutxml))
-                            {
-                                var xmlDoc = new XmlDocument();
-                                xmlDoc.LoadXml(layoutxml);
-                                XmlNode root = xmlDoc.DocumentElement;
-
-                                baseInfo.Type = entity.LogicalName + ".layoutxml";
-
-                                ExploreXmlRecursively(root, xmlnodes, baseInfo);
-
-                            }
-                        }
-
+                        queries.AddRange(savedQueries);
                     }
 
-                    foreach (var entity in savedQueries.Entities)
+                    // Personal views
+                    var userQueries = GetUserQueryForExport(selectedEntities);
+
+                    if (userQueries.Entities.Count > 0)
                     {
-                        var baseInfo = new ViewXmlInfo()
+                        queries.AddRange(userQueries.Entities.ToList());
+                    }
+
+                    nodes.Reset();
+                    nodes.Columns.Add("Guid");
+                    nodes.Columns.Add("Type");
+                    nodes.Columns.Add("Entity");
+                    nodes.Columns.Add("QueryType");
+                    nodes.Columns.Add("IsDefault");
+                    nodes.Columns.Add("Name");
+                    nodes.Columns.Add("XmlType");
+                    nodes.Columns.Add("NodeURI");
+                    nodes.Columns.Add("ParentNode");
+                    nodes.Columns.Add("InnerXml");
+                    nodes.Columns.Add("NodeName");
+                    nodes.Columns.Add("NodeValue");
+                    nodes.Columns.Add("NodeAttributes");
+
+                    // View node
+                    foreach (var entity in queries)
+                    {
+                        var view = new ViewModel()
                         {
                             Guid = entity.Id,
-                            Entity = entity.GetAttributeValue<string>("returnedtypecode"),
                             Type = entity.LogicalName,
-                            QueryType = entity.GetAttributeValue<int>("querytype"),
+                            Entity = entity.GetAttributeValue<string>("returnedtypecode"),
+                            QueryType = GetQueryTypeLabel(entity.GetAttributeValue<int>("querytype")),
                             Name = entity.GetAttributeValue<string>("name"),
+                            FetchXml = entity.GetAttributeValue<string>("fetchxml"),
+                            LayoutXml = entity.GetAttributeValue<string>("layoutxml"),
                         };
+
+                        views.Add(view);
 
                         if (entity.TryGetAttributeValue<string>("fetchxml", out string fetchxml))
                         {
@@ -331,10 +530,7 @@ namespace StandardViewCreator
                                 xmlDoc.LoadXml(fetchxml);
                                 XmlNode root = xmlDoc.DocumentElement;
 
-                                baseInfo.Type = entity.LogicalName + ".fetchxml";
-
-                                ExploreXmlRecursively(root, xmlnodes, baseInfo);
-
+                                ExploreXmlRecursively("fetchxml", root, view);
                             }
                         }
 
@@ -346,13 +542,9 @@ namespace StandardViewCreator
                                 xmlDoc.LoadXml(layoutxml);
                                 XmlNode root = xmlDoc.DocumentElement;
 
-                                baseInfo.Type = entity.LogicalName + ".layoutxml";
-
-                                ExploreXmlRecursively(root, xmlnodes, baseInfo);
-
+                                ExploreXmlRecursively("layoutxml", root, view);
                             }
                         }
-
                     }
                 },
                 PostWorkCallBack = (args) =>
@@ -366,58 +558,84 @@ namespace StandardViewCreator
                     {
                         dlg.Filter = "Excel file(*.xlsx)|*.xlsx";
 
-                        if (dlg.ShowDialog() == DialogResult.OK)
+                        if (dlg.ShowDialog() != DialogResult.OK)
                         {
-                            ExcelPackage.License.SetNonCommercialPersonal("mkdev");
-                            using (var package = new ExcelPackage())
-                            {
-                                var workbook = package.Workbook;
-
-                                var worksheet1 = workbook.Worksheets.Add("Views");
-
-                                var range1 = worksheet1.Cells["A1"].LoadFromCollection(views, c =>
-                                {
-                                    c.PrintHeaders = true;
-                                    c.TableStyle = TableStyles.Light2;
-                                });
-
-                                var worksheet2 = workbook.Worksheets.Add("ViewNodes");
-
-                                var range2 = worksheet2.Cells["A1"].LoadFromCollection(xmlnodes, c =>
-                                {
-                                    c.PrintHeaders = true;
-                                    c.TableStyle = TableStyles.Light2;
-                                });
-
-                                package.SaveAs(new FileInfo(dlg.FileName));
-                            }
-
-                            DialogResult result = MessageBox.Show("The file has been saved successfully. Do you want to open it?", "Successfully", MessageBoxButtons.YesNo);
-
-                            if (result == DialogResult.Yes)
-                            {
-                                Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
-                            }
+                            return;
                         }
+
+                        WorkAsync(new WorkAsyncInfo
+                        {
+                            Message = "Exporting views...",
+                            Work = (worker, args2) =>
+                            {
+                                ExcelPackage.License.SetNonCommercialPersonal("mkdev");
+                                using (var package = new ExcelPackage())
+                                {
+                                    var wb = package.Workbook;
+
+                                    // Views list
+                                    var ws1 = wb.Worksheets.Add("Views list");
+                                    var range1 = ws1.Cells["A3"].LoadFromCollection(views, c =>
+                                    {
+                                        c.PrintHeaders = true;
+                                        c.TableStyle = TableStyles.Light8;
+                                    });
+
+                                    for (int i = 1; i <= range1.Columns; i++)
+                                    {
+                                        ws1.Column(i).Width = 12;
+                                    }
+
+                                    // Xml node
+                                    var ws2 = wb.Worksheets.Add("Xml node");
+                                    var range2 = ws2.Cells["A3"].LoadFromDataTable(nodes, c =>
+                                    {
+                                        c.PrintHeaders = true;
+                                        c.TableStyle = TableStyles.Light8;
+                                    });
+
+                                    for (int i = 1; i <= range2.Columns; i++)
+                                    {
+                                        ws2.Column(i).Width = 12;
+                                    }
+
+                                    package.SaveAs(new FileInfo(dlg.FileName));
+                                }
+                            },
+                            PostWorkCallBack = (args2) =>
+                            {
+                                if (args2.Error != null)
+                                {
+                                    MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                }
+
+                                DialogResult result = MessageBox.Show("The file has been saved successfully.\r\nDo you want to open it?", "Successfully", MessageBoxButtons.YesNo);
+
+                                if (result == DialogResult.Yes)
+                                {
+                                    Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
+                                }
+                            }
+                        });
                     }
                 }
             });
         }
 
-        private void ExploreXmlRecursively(XmlNode node, List<ViewXmlInfo> xmls, ViewXmlInfo baseInfo)
+        private void ExploreXmlRecursively(string xmlType, XmlNode node, ViewModel view)
         {
-
-            WriteNodeValue(node, xmls, baseInfo);
+            ParseXmlToDataTable(xmlType, node, view);
 
             foreach (XmlNode childNode in node.ChildNodes)
             {
-                ExploreXmlRecursively(childNode, xmls, baseInfo);
+                ExploreXmlRecursively(xmlType, childNode, view);
             }
         }
 
-        private void WriteNodeValue(XmlNode node, List<ViewXmlInfo> xmls, ViewXmlInfo baseInfo)
+        private void ParseXmlToDataTable(string xmlType, XmlNode node, ViewModel view)
         {
             var nodeAttributes = new List<(string Name, string Value)>();
+            var nodePath = new List<(string Name, string Value)>();
 
             if (node.Attributes != null)
             {
@@ -427,18 +645,86 @@ namespace StandardViewCreator
                 }
             }
 
-            xmls.Add(new ViewXmlInfo()
+            var dr = nodes.NewRow();
+            dr["Guid"] = view.Guid;
+            dr["Type"] = view.Type;
+            dr["Entity"] = view.Entity;
+            dr["QueryType"] = view.QueryType;
+            dr["Name"] = view.Name;
+            dr["XmlType"] = xmlType;
+            dr["NodeURI"] = String.Join(".", GetNodePath(node));
+            dr["ParentNode"] = node.ParentNode?.LocalName;
+            dr["InnerXml"] = node.InnerXml;
+            dr["NodeName"] = node.LocalName;
+            dr["NodeValue"] = ValidateEmptyValue(node.Value);
+            dr["NodeAttributes"] = "{" + $"{String.Join(", ", nodeAttributes.Select(s => $"\"{s.Name}\": \"{s.Value}\"").ToArray())}" + "}";
+
+            if (node.Attributes != null)
             {
-                Guid = baseInfo.Guid,
-                Entity = baseInfo.Entity,
-                Type = baseInfo.Type,
-                QueryType = baseInfo.QueryType,
-                Name = baseInfo.Name,
-                ParentNode = node.ParentNode?.LocalName,
-                NodeName = node.LocalName,
-                NodeValue = ValidateEmptyValue(node.Value),
-                NodeAttributes = "{" + $"{String.Join(",", nodeAttributes.Select(s => $"\"{s.Name}\": \"{s.Value}\"").ToArray())}" + "}",
-            });
+                foreach (XmlAttribute attribute in node.Attributes)
+                {
+                    var attributeName = $"NodeAttributes.{attribute.Name}";
+
+                    if (!nodes.Columns.Contains(attributeName))
+                    {
+                        nodes.Columns.Add(attributeName);
+                    }
+
+                    dr[attributeName] = attribute.Value;
+                }
+            }
+
+            nodes.Rows.Add(dr);
+
+        }
+
+        private string GetQueryTypeLabel(int queryType)
+        {
+           var SavedQueryQueryTypeMap = new Dictionary<int, string>
+            {
+                { 0, "MainApplicationView" },
+                { 1, "AdvancedSearch" },
+                { 2, "SubGrid" },
+                { 4, "QuickFindSearch" },
+                { 8, "Reporting" },
+                { 16, "OfflineFilters" },
+                { 64, "LookupView" },
+                { 128, "SMAppointmentBookView" },
+                { 256, "OutlookFilters" },
+                { 512, "AddressBookFilters" },
+                { 1024, "MainApplicationViewWithoutSubject" },
+                { 2048, "SavedQueryTypeOther" },
+                { 4096, "InteractiveWorkflowView" },
+                { 8192, "OfflineTemplate" },
+                { 16384, "CustomDefinedView" },
+                { 65536, "ExportFieldTranslationsView" },
+                { 131072, "OutlookTemplate" }
+            };
+
+            string queryTypeLabel = String.Empty;
+
+            if (SavedQueryQueryTypeMap.TryGetValue(queryType, out string label))
+            {
+                return $"{queryType}: {label}";
+            }
+            else
+            {
+                return $"{queryType}";
+            }
+        }
+
+        private List<string> GetNodePath(XmlNode node)
+        {
+            if (node.ParentNode == null)
+            {
+                return new List<string> { };
+            }
+            else
+            {
+                var result = GetNodePath(node.ParentNode);
+                result.Add(node.LocalName);
+                return result;
+            }
         }
 
         private string ValidateEmptyValue(string value)
@@ -457,20 +743,26 @@ namespace StandardViewCreator
         {
             var solutionComponents = GetSolutionComponents(solutionId);
 
+            if (solutionComponents.Entities.Count == 0)
+            {
+                MessageBox.Show("No entities found in solution.");
+                return;
+            }
+
             if (solutionComponents.Entities.Count > 0)
             {
                 WorkAsync(new WorkAsyncInfo
                 {
                     // Access form components inside PostWorkCallBack to avoid potential runtime errors.
 
-                    Message = "Get entities from solution.",
+                    Message = "Getting entities from solution...",
                     Work = (worker, args) =>
                     {
                         var entityMetadataIds = solutionComponents.Entities
                             .Select(s => s.GetAttributeValue<Guid>("objectid"))
                             .ToHashSet();
 
-                        RetrieveAllEntitiesRequest request = new RetrieveAllEntitiesRequest
+                        var request = new RetrieveAllEntitiesRequest
                         {
                             EntityFilters = EntityFilters.Entity,
                         };
@@ -501,7 +793,7 @@ namespace StandardViewCreator
 
                         var Entities = allEntities.EntityMetadata
                             .Where(w => entityMetadataIds.Contains((Guid)w.MetadataId))
-                            .Select(s => new EntityInfo
+                            .Select(s => new EntityModel
                             {
                                 DisplayName = s.DisplayName.UserLocalizedLabel.Label,
                                 LogicalName = s.LogicalName,
@@ -518,7 +810,7 @@ namespace StandardViewCreator
                     },
                     PostWorkCallBack = (args) =>
                     {
-                        var Entities = args.Result as List<EntityInfo>;
+                        var Entities = args.Result as List<EntityModel>;
 
                         tlpEntity_lvwEntities.Items.Clear();
 
@@ -530,21 +822,15 @@ namespace StandardViewCreator
                         }
                     }
                 });
-                
-            }
-            else
-            {
-                MessageBox.Show("No entities found in solution.");
-                return;
             }
         }
 
-        private SortInfo GetSortInfo(string logicalName, string sortValue)
+        private OrderModel GetOrder(string logicalName, string sortValue)
         {
             int priority = int.Parse(sortValue[2].ToString());
             bool descending = sortValue[0].ToString() == "↓";
 
-            return new SortInfo()
+            return new OrderModel()
             {
                 LogicalName = logicalName,
                 Priority = priority,
@@ -578,15 +864,16 @@ namespace StandardViewCreator
             return Guid.Empty;
         }
 
-        private List<EntityInfo> GetSelectedEntities()
+        private List<EntityModel> GetSelectedEntities()
         {
             var selectedEntities = tlpEntity_lvwEntities.Items.Cast<ListViewItem>()
-                .Where(w => w.Checked == true && ((EntityInfo)w.Tag).IsValidForAdvancedFind == true)
-                .Select(s => (EntityInfo)s.Tag)
+                .Where(w => w.Checked == true && ((EntityModel)w.Tag).IsValidForAdvancedFind == true)
+                .Select(s => (EntityModel)s.Tag)
                 .ToList();
 
             return selectedEntities;
         }
+
 
         private void CreateView()
         {
@@ -609,11 +896,11 @@ namespace StandardViewCreator
 
             var selectedColumns = listViewColumns.Items.Cast<ListViewItem>()
                 .Where(w => w.Checked == true)
-                .Select(s => new ColumnInfo()
+                .Select(s => new ColumnModel()
                 {
                     DisplayName = s.Text,
                     LogicalName = s.SubItems[1].Text,
-                    Sorting = s.SubItems[2].Text,
+                    Order = s.SubItems[2].Text,
                     Width = s.SubItems[3].Text,
                 })
                 .ToList();
@@ -624,16 +911,87 @@ namespace StandardViewCreator
                 return;
             }
 
+            // 0: User view
+            // 1: Public view
+            int viewTypeCmd = int.Parse(tlpViewOptions_cmbType.Text[0].ToString());
+            string queryTable = String.Empty;
+
+            switch (viewTypeCmd)
+            {
+                case 0:
+                    queryTable = "userquery";
+                    break;
+                case 1:
+                    queryTable = "savedquery";
+                    break;
+                default:
+                    MessageBox.Show("Type: An unexpected item has been selected.");
+                    return;
+            }
+
+            // 0: Allow (Disable overwrite)
+            // 1: Disallow (Enable overwrite)
+            int viewDuplicateCmd = int.Parse(tlpViewOptions_cmbOverwrite.Text[0].ToString());
+            bool allowDuplicate = false;
+
+            switch (viewDuplicateCmd)
+            {
+                case 0:
+                    allowDuplicate = true;
+                    break;
+                case 1:
+                    allowDuplicate = false;
+                    break;
+                default:
+                    MessageBox.Show("Duplicate: An unexpected item has been selected.");
+                    return;
+            }
+
+            // 0: All (No filter)
+            // 1: Active only
+            // 2: Inactive only
+            int viewFilterCmd = int.Parse(tlpViewOptions_cmbFilter.Text[0].ToString());
+            string filterNode = String.Empty;
+
+            switch (viewFilterCmd)
+            {
+                case 0:
+                    filterNode = String.Empty;
+                    break;
+                case 1:
+                    filterNode = "<filter><condition attribute='statecode' operator='eq' value='0' /></filter>";
+                    break;
+                case 2:
+                    filterNode = "<filter><condition attribute='statecode' operator='eq' value='1' /></filter>";
+                    break;
+                default:
+                    MessageBox.Show("Filter: An unexpected item has been selected.");
+                    return;
+            }
+
+            DialogResult result = MessageBox.Show(String.Join("\r\n", new string[]
+            {
+                "Do you want to create the view?",
+                String.Empty,
+                "ConnectionDetail:",
+                $"  Organization: {ConnectionDetail.OrganizationFriendlyName} [{ConnectionDetail.Organization}]",
+                $"  WebApplicationUrl: {ConnectionDetail.WebApplicationUrl}",
+                $"  UserName: {ConnectionDetail.UserName}",
+            }), "Create View", MessageBoxButtons.YesNo);
+
+            if (result != DialogResult.Yes)
+            {
+                return;
+            }
+
             WorkAsync(new WorkAsyncInfo
             {
-                Message = $"Creating view...",
+                Message = "Creating view...",
                 Work = (worker, args) =>
                 {
                     string formatAttribute = "<attribute name='{0}' />";
                     string formatOrder = "<order attribute='{0}' descending='{1}' />";
                     string formatCell = "<cell name='{0}' width='{1}' />";
-
-                    // string formatViewName = "Audit Monitoring ({0})";
 
                     // Available: {entityLogicalName}, {entityDisplayName}, {yyyyMMdd}
                     string viewName = tlpViewOptions_txtName.Text;
@@ -653,7 +1011,7 @@ namespace StandardViewCreator
                         var entityPrimaryId = entity.PrimaryIdAttribute;
                         var entityLocicalName = entity.LogicalName;
 
-                        RetrieveEntityRequest request = new RetrieveEntityRequest
+                        var request = new RetrieveEntityRequest
                         {
                             EntityFilters = EntityFilters.Attributes,
                             LogicalName = entityLocicalName
@@ -669,25 +1027,26 @@ namespace StandardViewCreator
                             .ToList();
 
                         var sortSet = columnSet
-                            .Where(w => !String.IsNullOrEmpty(w.Sorting))
-                            .Select(s => GetSortInfo(s.LogicalName, s.Sorting))
+                            .Where(w => !String.IsNullOrEmpty(w.Order))
+                            .Select(s => GetOrder(s.LogicalName, s.Order))
                             .OrderBy(o => o.Priority)
                             .ToList();
 
-                        var nodeAttribute = String.Join(String.Empty, columnSet
+                        var attributeNode = String.Join(String.Empty, columnSet
                             .Select(s => String.Format(formatAttribute, s.LogicalName))).Replace(formatPrimaryName, entityPrimaryName);
 
-                        var nodeOrder = String.Join(String.Empty, sortSet
+                        var orderNode = String.Join(String.Empty, sortSet
                             .Select(s => String.Format(formatOrder, s.LogicalName, s.Descending))).Replace(formatPrimaryName, entityPrimaryName); ;
 
-                        var nodeCell = String.Join(String.Empty, columnSet
+                        var cellNode = String.Join(String.Empty, columnSet
                             .Select(s => String.Format(formatCell, s.LogicalName, s.Width))).Replace(formatPrimaryName, entityPrimaryName);
-                        
+
                         string fetchxml = $@"
                         <fetch>
                           <entity name='{entityLocicalName}'>
-                            {nodeAttribute}
-                            {nodeOrder}
+                            {attributeNode}
+                            {orderNode}
+                            {filterNode}
                           </entity>
                         </fetch>
                         ";
@@ -695,7 +1054,7 @@ namespace StandardViewCreator
                         string layoutxml = $@"
                         <grid name='resultset' object='{entityObjectTypeCode}' jump='{entityPrimaryName}' select='1' icon='1' preview='1'>
                           <row name='result' id='{entityPrimaryId}'>
-                            {nodeCell}
+                            {cellNode}
                           </row>
                         </grid>
                         ";
@@ -706,7 +1065,7 @@ namespace StandardViewCreator
                             .Replace(formatEntityLogicalName, entity.LogicalName)
                             .Replace(formatDate, yyyymmdd);
 
-                        Entity create = new Entity("userquery")
+                        var create = new Entity(queryTable)
                         {
                             ["name"] = formattedViewName,
                             ["fetchxml"] = ToSingleLine(fetchxml),
@@ -737,7 +1096,7 @@ namespace StandardViewCreator
                     var results = args.Result as HashSet<Guid>;
                     if (results != null)
                     {
-                        MessageBox.Show($"View created.");
+                        MessageBox.Show("View created.");
                     }
                 }
             });
@@ -747,7 +1106,7 @@ namespace StandardViewCreator
         {
             WorkAsync(new WorkAsyncInfo
             {
-                Message = "Get solutions. ",
+                Message = "Getting solutions...",
                 Work = (worker, args) =>
                 {
                     var solutions = GetSolutions();
@@ -766,7 +1125,7 @@ namespace StandardViewCreator
                     if (solutions.Entities.Count > 0)
                     {
                         var items = solutions.Entities
-                            .Select(s => new SolutionInfo
+                            .Select(s => new SolutionModel
                             {
                                 SolutionId = s.Id.ToString(),
                                 DisplayName = s.GetAttributeValue<string>("friendlyname"),
@@ -775,7 +1134,7 @@ namespace StandardViewCreator
                             })
                             .ToList();
 
-                        using (var form = new SolutionSelecter(items))
+                        using (var form = new SolutionSelector(items))
                         {
                             if (form.ShowDialog() == DialogResult.OK)
                             {
@@ -839,7 +1198,7 @@ namespace StandardViewCreator
             }
         }
 
-        private void SetSortValue(ListView listView, ComboBox comboBox)
+        private void SetOrderValue(ListView listView, ComboBox comboBox)
         {
             if (listView.SelectedItems.Count == 0)
             {
@@ -862,7 +1221,7 @@ namespace StandardViewCreator
             }
         }
 
-        private void ClearSortValue(ListView listView, ComboBox comboBox)
+        private void ClearOrderValue(ListView listView, ComboBox comboBox)
         {
             if (listView.SelectedItems.Count == 0)
             {
@@ -955,14 +1314,14 @@ namespace StandardViewCreator
             MoveSelectedItemDown(tlpColumn_lvwColumns);
         }
 
-        private void tlpSort_cbxSortValue_SelectedIndexChanged(object sender, EventArgs e)
+        private void tlpOrder_cbxOrder_SelectedIndexChanged(object sender, EventArgs e)
         {
 
         }
 
-        private void tlpSort_btnSet_Click(object sender, EventArgs e)
+        private void tlpOrder_btnSet_Click(object sender, EventArgs e)
         {
-            SetSortValue(tlpColumn_lvwColumns, tlpSort_cmbSortValue);
+            SetOrderValue(tlpColumn_lvwColumns, tlpOrder_cmbOrder);
         }
 
         private void tlpWidth_sudWidthValue_ValueChanged(object sender, EventArgs e)
@@ -980,9 +1339,9 @@ namespace StandardViewCreator
             ExecuteMethod(CreateView);
         }
 
-        private void tlpSort_btnClear_Click(object sender, EventArgs e)
+        private void tlpOrder_btnClear_Click(object sender, EventArgs e)
         {
-            ClearSortValue(tlpColumn_lvwColumns, tlpSort_cmbSortValue);
+            ClearOrderValue(tlpColumn_lvwColumns, tlpOrder_cmbOrder);
         }
 
         private void tlpColumn_lvwColumns_SelectedIndexChanged(object sender, EventArgs e)
@@ -991,15 +1350,15 @@ namespace StandardViewCreator
             {
                 tlpPosition_btnUp.Enabled = false;
                 tlpPosition_btnDown.Enabled = false;
-                tlpSort_btnSet.Enabled = false;
-                tlpSort_btnClear.Enabled = false;
+                tlpOrder_btnSet.Enabled = false;
+                tlpOrder_btnClear.Enabled = false;
             }
             else
             {
                 tlpPosition_btnUp.Enabled = true;
                 tlpPosition_btnDown.Enabled = true;
-                tlpSort_btnSet.Enabled = true;
-                tlpSort_btnClear.Enabled = true;
+                tlpOrder_btnSet.Enabled = true;
+                tlpOrder_btnClear.Enabled = true;
             }
         }
 
@@ -1016,6 +1375,16 @@ namespace StandardViewCreator
         private void ddbExport_itemSelectedEntities_Click(object sender, EventArgs e)
         {
             ExecuteMethod(ViewExportFromSelectedEntities);
+        }
+
+        private void ddbSaveAs_itemPublic_Click(object sender, EventArgs e)
+        {
+            ExecuteMethod(DuplicateAsPublicView);
+        }
+
+        private void ddbSaveAs_itemPersonal_Click(object sender, EventArgs e)
+        {
+            ExecuteMethod(DuplicateAsUserView);
         }
     }
 }

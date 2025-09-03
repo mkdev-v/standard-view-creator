@@ -4,16 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StandardViewCreator
+namespace StandardViewCreator.Models
 {
-    internal class ViewInfo
+    public class ViewModel
     {
         public Guid Guid { get; set; }
-        public string Entity { get; set; }
         public string Type { get; set; }
+        public string Entity { get; set; }
+        public string QueryType { get; set; }
         public string Name { get; set; }
         public string FetchXml { get; set; }
         public string LayoutXml { get; set; }
-        public int? QueryType { get; set; }
     }
 }

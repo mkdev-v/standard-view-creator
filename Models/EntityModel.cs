@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StandardViewCreator
+namespace StandardViewCreator.Models
 {
-    internal class EntityInfo
+    public class EntityModel
     {
         public string DisplayName { get; set; }
         public string LogicalName { get; set; }

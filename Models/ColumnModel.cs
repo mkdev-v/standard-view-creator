@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StandardViewCreator
+namespace StandardViewCreator.Models
 {
-    internal class ColumnInfo
+    public class ColumnModel
     {
         public string DisplayName { get; set; }
         public string LogicalName { get; set; }
-        public string Sorting { get; set; }
+        public string Order { get; set; }
         public string Width { get; set; }
     }
 }

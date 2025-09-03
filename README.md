@@ -5,10 +5,12 @@ It allows you to bulk-create user views across multiple entities, using standard
 
 ## ✨ Features
 
-- Bulk creation of personal views (User Views)
+- Bulk creation of public/personal views
 - Automatically selects entities from the current solution
 - Configurable view naming using dynamic tokens
-- Customizable column layout (order, sorting, width)
+- Customizable column layout (position, order, width)
+- Export the list of views to Excel
+- Duplicate a View (as public/personal view)
 
 ## 🧭 Usage
 
@@ -19,8 +21,7 @@ It allows you to bulk-create user views across multiple entities, using standard
 ### 🛠️ 2. Configure View Settings
 
 - **Type**  
-  Currently supports only *User View (Personal View)*.  
-  Support for *System View* is planned in future updates.
+  Currently supports *User View (Personal View)* and *Public View*.  
 
 - **Name**  
   You can define a dynamic view name using the following tokens:  
@@ -28,13 +29,11 @@ It allows you to bulk-create user views across multiple entities, using standard
   Example:  
   `Audit Monitoring ({entityLogicalName})` → `Audit Monitoring (account)`
 
-- **Duplicate Handling**  
+- **Overwrite Handling**  
   Currently, views are skipped if a view with the same name exists.  
-  Overwrite options are planned in a future release.
 
 - **Filter Template**  
-  Currently, only "No Filter" is supported.  
-  Templates such as "Active Only" and "Inactive Only" are under development.
+  Currently supports "No Filter" and "Active Only", "Inactive Only".  
 
 ### 🧮 3. Configure Columns
 

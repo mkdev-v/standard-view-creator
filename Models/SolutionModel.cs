@@ -4,15 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StandardViewCreator
+namespace StandardViewCreator.Models
 {
-    public class SolutionInfo
+    public class SolutionModel
     {
         public string SolutionId { get; set; }
         public string DisplayName { get; set; }
         public string Version { get; set; }
         public string Publisher { get; set; }
-
-        public override string ToString() => DisplayName;
     }
 }

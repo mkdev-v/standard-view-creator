@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StandardViewCreator
+namespace StandardViewCreator.Models
 {
-    internal class SortInfo
+    public class OrderModel
     {
         public string LogicalName { get; set; }
         public int Priority { get; set; }

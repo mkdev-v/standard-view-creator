@@ -10,14 +10,15 @@ using System.Windows.Controls;
 using System.Windows.Forms;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Organization;
+using StandardViewCreator.Models;
 
 namespace StandardViewCreator
 {
-    public partial class SolutionSelecter : Form
+    public partial class SolutionSelector : Form
     {
-        public SolutionInfo SelectedItem { get; private set; }
+        public SolutionModel SelectedItem { get; private set; }
 
-        public SolutionSelecter(List<SolutionInfo> solutions)
+        public SolutionSelector(List<SolutionModel> solutions)
         {
             InitializeComponent();
 
@@ -28,18 +29,18 @@ namespace StandardViewCreator
                 item.SubItems.Add(solution.Publisher);
                 item.SubItems.Add(solution.SolutionId);
                 item.Tag = solution; // 選択時に取り出せるようにオブジェクトを保持
-                lvwSolutions.Items.Add(item);
+                tlpMain_lvwSolutions.Items.Add(item);
             }
 
-            lvwSolutions.SelectedIndexChanged += (s, e) =>
+            tlpMain_lvwSolutions.SelectedIndexChanged += (s, e) =>
             {
-                if (lvwSolutions.SelectedItems.Count > 0)
+                if (tlpMain_lvwSolutions.SelectedItems.Count > 0)
                 {
-                    SelectedItem = lvwSolutions.SelectedItems[0].Tag as SolutionInfo;
+                    SelectedItem = tlpMain_lvwSolutions.SelectedItems[0].Tag as SolutionModel;
                 }
             };
 
-            buttonOK.Click += (s, e) =>
+            tlpMain_btnOK.Click += (s, e) =>
             {
                 if (SelectedItem != null)
                     this.DialogResult = DialogResult.OK;
@@ -47,7 +48,7 @@ namespace StandardViewCreator
                     MessageBox.Show("Solution must be selected.");
             };
 
-            buttonCancel.Click += (s, e) =>
+            tlpMain_btnCancel.Click += (s, e) =>
             {
                 this.DialogResult = DialogResult.Cancel;
             };
