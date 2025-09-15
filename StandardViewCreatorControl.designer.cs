@@ -29,57 +29,57 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem23 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem12 = new System.Windows.Forms.ListViewItem(new string[] {
             "Created On",
             "createdon",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem24 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem13 = new System.Windows.Forms.ListViewItem(new string[] {
             "Created By",
             "createdby",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem25 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem14 = new System.Windows.Forms.ListViewItem(new string[] {
             "Created By (Delegate)",
             "createdonbehalfby",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem26 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem15 = new System.Windows.Forms.ListViewItem(new string[] {
             "Modified On",
             "modifiedon",
             "↓(1)",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem27 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem16 = new System.Windows.Forms.ListViewItem(new string[] {
             "Modified By",
             "modifiedby",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem28 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem17 = new System.Windows.Forms.ListViewItem(new string[] {
             "Modified By (Delegate)",
             "modifiedonbehalfby",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem29 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem18 = new System.Windows.Forms.ListViewItem(new string[] {
             "Status",
             "statecode",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem30 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem19 = new System.Windows.Forms.ListViewItem(new string[] {
             "Status Reason",
             "statuscode",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem31 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem20 = new System.Windows.Forms.ListViewItem(new string[] {
             "{primaryAttribute}",
             "{primaryAttribute}",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem32 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem21 = new System.Windows.Forms.ListViewItem(new string[] {
             "Owner",
             "ownerid",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem33 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem22 = new System.Windows.Forms.ListViewItem(new string[] {
             "Owning Business Unit",
             "owningbusinessunit",
             "",
@@ -145,8 +145,9 @@
             this.lvwColumns_colOrder = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.lvwColumns_colWidth = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tlpColumn_lblNote = new System.Windows.Forms.Label();
-            this.cmbDuplicate_tip = new System.Windows.Forms.ToolTip(this.components);
+            this.cmbOverwrite_tip = new System.Windows.Forms.ToolTip(this.components);
             this.txtName_tip = new System.Windows.Forms.ToolTip(this.components);
+            this.ddbExport_itemLoadXML = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmMain.SuspendLayout();
             this.tlpMain.SuspendLayout();
             this.tlpMain_gbxEntity.SuspendLayout();
@@ -217,7 +218,8 @@
             // 
             this.tsmMain_ddbExport.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ddbExport_itemAll,
-            this.ddbExport_itemSelectedEntities});
+            this.ddbExport_itemSelectedEntities,
+            this.ddbExport_itemLoadXML});
             this.tsmMain_ddbExport.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsmMain_ddbExport.Name = "tsmMain_ddbExport";
             this.tsmMain_ddbExport.Size = new System.Drawing.Size(113, 22);
@@ -257,14 +259,14 @@
             // ddbSaveAs_itemPublic
             // 
             this.ddbSaveAs_itemPublic.Name = "ddbSaveAs_itemPublic";
-            this.ddbSaveAs_itemPublic.Size = new System.Drawing.Size(180, 22);
+            this.ddbSaveAs_itemPublic.Size = new System.Drawing.Size(163, 22);
             this.ddbSaveAs_itemPublic.Text = "As Public View";
             this.ddbSaveAs_itemPublic.Click += new System.EventHandler(this.ddbSaveAs_itemPublic_Click);
             // 
             // ddbSaveAs_itemPersonal
             // 
             this.ddbSaveAs_itemPersonal.Name = "ddbSaveAs_itemPersonal";
-            this.ddbSaveAs_itemPersonal.Size = new System.Drawing.Size(180, 22);
+            this.ddbSaveAs_itemPersonal.Size = new System.Drawing.Size(163, 22);
             this.ddbSaveAs_itemPersonal.Text = "As Personal View";
             this.ddbSaveAs_itemPersonal.Click += new System.EventHandler(this.ddbSaveAs_itemPersonal_Click);
             // 
@@ -532,8 +534,8 @@
             this.tlpViewOptions_cmbOverwrite.Enabled = false;
             this.tlpViewOptions_cmbOverwrite.FormattingEnabled = true;
             this.tlpViewOptions_cmbOverwrite.Items.AddRange(new object[] {
-            "0: Allow (Disable overwrite)",
-            "1: Disallow (Enable overwrite)"});
+            "0: Disable overwrite",
+            "1: Enable overwrite"});
             this.tlpViewOptions_cmbOverwrite.Location = new System.Drawing.Point(63, 54);
             this.tlpViewOptions_cmbOverwrite.Name = "tlpViewOptions_cmbOverwrite";
             this.tlpViewOptions_cmbOverwrite.Size = new System.Drawing.Size(403, 20);
@@ -854,38 +856,38 @@
             this.tlpColumn_lvwColumns.FullRowSelect = true;
             this.tlpColumn_lvwColumns.GridLines = true;
             this.tlpColumn_lvwColumns.HideSelection = false;
-            listViewItem23.Checked = true;
-            listViewItem23.StateImageIndex = 1;
-            listViewItem24.Checked = true;
-            listViewItem24.StateImageIndex = 1;
-            listViewItem25.StateImageIndex = 0;
-            listViewItem26.Checked = true;
-            listViewItem26.StateImageIndex = 1;
-            listViewItem27.Checked = true;
-            listViewItem27.StateImageIndex = 1;
-            listViewItem28.StateImageIndex = 0;
-            listViewItem29.Checked = true;
-            listViewItem29.StateImageIndex = 1;
-            listViewItem30.Checked = true;
-            listViewItem30.StateImageIndex = 1;
-            listViewItem31.Checked = true;
-            listViewItem31.StateImageIndex = 1;
-            listViewItem32.Checked = true;
-            listViewItem32.StateImageIndex = 1;
-            listViewItem33.Checked = true;
-            listViewItem33.StateImageIndex = 1;
+            listViewItem12.Checked = true;
+            listViewItem12.StateImageIndex = 1;
+            listViewItem13.Checked = true;
+            listViewItem13.StateImageIndex = 1;
+            listViewItem14.StateImageIndex = 0;
+            listViewItem15.Checked = true;
+            listViewItem15.StateImageIndex = 1;
+            listViewItem16.Checked = true;
+            listViewItem16.StateImageIndex = 1;
+            listViewItem17.StateImageIndex = 0;
+            listViewItem18.Checked = true;
+            listViewItem18.StateImageIndex = 1;
+            listViewItem19.Checked = true;
+            listViewItem19.StateImageIndex = 1;
+            listViewItem20.Checked = true;
+            listViewItem20.StateImageIndex = 1;
+            listViewItem21.Checked = true;
+            listViewItem21.StateImageIndex = 1;
+            listViewItem22.Checked = true;
+            listViewItem22.StateImageIndex = 1;
             this.tlpColumn_lvwColumns.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem23,
-            listViewItem24,
-            listViewItem25,
-            listViewItem26,
-            listViewItem27,
-            listViewItem28,
-            listViewItem29,
-            listViewItem30,
-            listViewItem31,
-            listViewItem32,
-            listViewItem33});
+            listViewItem12,
+            listViewItem13,
+            listViewItem14,
+            listViewItem15,
+            listViewItem16,
+            listViewItem17,
+            listViewItem18,
+            listViewItem19,
+            listViewItem20,
+            listViewItem21,
+            listViewItem22});
             this.tlpColumn_lvwColumns.Location = new System.Drawing.Point(3, 116);
             this.tlpColumn_lvwColumns.Name = "tlpColumn_lvwColumns";
             this.tlpColumn_lvwColumns.Size = new System.Drawing.Size(462, 245);
@@ -926,6 +928,13 @@
             this.tlpColumn_lblNote.TabIndex = 1;
             this.tlpColumn_lblNote.Text = "*If the selected field does not exist in the entity, the view will still be creat" +
     "ed, but the field will not be included.";
+            // 
+            // ddbExport_itemLoadXML
+            // 
+            this.ddbExport_itemLoadXML.Name = "ddbExport_itemLoadXML";
+            this.ddbExport_itemLoadXML.Size = new System.Drawing.Size(180, 22);
+            this.ddbExport_itemLoadXML.Text = "Load XML";
+            this.ddbExport_itemLoadXML.Click += new System.EventHandler(this.ddbExport_itemLoadXML_Click);
             // 
             // StandardViewCreatorControl
             // 
@@ -1039,11 +1048,12 @@
         private System.Windows.Forms.ToolStripDropDownButton tsmMain_ddbExport;
         private System.Windows.Forms.ToolStripMenuItem ddbExport_itemAll;
         private System.Windows.Forms.ToolStripMenuItem ddbExport_itemSelectedEntities;
-        private System.Windows.Forms.ToolTip cmbDuplicate_tip;
+        private System.Windows.Forms.ToolTip cmbOverwrite_tip;
         private System.Windows.Forms.ToolTip txtName_tip;
         private System.Windows.Forms.ToolStripSeparator tsmMain_sep3;
         private System.Windows.Forms.ToolStripDropDownButton tsmMain_ddbSaveAs;
         private System.Windows.Forms.ToolStripMenuItem ddbSaveAs_itemPublic;
         private System.Windows.Forms.ToolStripMenuItem ddbSaveAs_itemPersonal;
+        private System.Windows.Forms.ToolStripMenuItem ddbExport_itemLoadXML;
     }
 }

@@ -62,13 +62,15 @@ namespace StandardViewCreator
                 LogInfo("Settings found and loaded");
             }
 
+            // Set default value for combo box
             tlpViewOptions_cmbType.SelectedIndex = 0;
             tlpViewOptions_cmbOverwrite.SelectedIndex = 0;
             tlpViewOptions_cmbFilter.SelectedIndex = 0;
             tlpOrder_cmbOrder.SelectedIndex = 0;
 
+            // Set tooltip
             txtName_tip.SetToolTip(tlpViewOptions_lblName, "Available: {entityLogicalName}, {entityDisplayName}, {yyyyMMdd}");
-            cmbDuplicate_tip.SetToolTip(tlpViewOptions_lblOverwrite, "Update mode unavailable. Running in create mode.");
+            cmbOverwrite_tip.SetToolTip(tlpViewOptions_lblOverwrite, "Update mode unavailable. Running in create mode.");
         }
 
 
@@ -339,7 +341,7 @@ namespace StandardViewCreator
 
             if (selectedEntities.Count == 0)
             {
-                MessageBox.Show("At least one entity must be selected.");
+                MessageBox.Show("At least one entity must be selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -426,7 +428,7 @@ namespace StandardViewCreator
                                     },
                                     PostWorkCallBack = (args2) =>
                                     {
-                                        MessageBox.Show("View duplicated.");
+                                        MessageBox.Show("View duplicated.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                     }
                                 });
                                 
@@ -437,22 +439,113 @@ namespace StandardViewCreator
             });
         }
 
+        private void ExcelExportFromLoadedXml()
+        {
+            using (var dlgOpen = new OpenFileDialog())
+            {
+                dlgOpen.Filter = "XML file(*.xml)|*.xml";
+
+                if (dlgOpen.ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+
+                var xmlDoc = new XmlDocument();
+
+                try
+                {
+                    xmlDoc.Load(dlgOpen.FileName); // Load from a XML file
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Failed to load XML: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                XmlNode root = xmlDoc.DocumentElement;
+
+                WorkAsync(new WorkAsyncInfo
+                {
+                    Message = "Loading xml...",
+                    Work = (worker, args) =>
+                    {
+                        nodes.Reset();
+                        // Core columns
+                        nodes.Columns.Add("NodeURI");
+                        nodes.Columns.Add("ParentNode");
+                        nodes.Columns.Add("NodeName");
+                        nodes.Columns.Add("InnerXml");
+                        nodes.Columns.Add("NodeValue");
+                        nodes.Columns.Add("NodeAttributes");
+
+                        ExploreXmlRecursively(root);
+                    },
+                    PostWorkCallBack = (args) =>
+                    {
+                        if (args.Error != null)
+                        {
+                            MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+
+                        using (var dlgSave = new SaveFileDialog())
+                        {
+                            dlgSave.Filter = "Excel file(*.xlsx)|*.xlsx";
+
+                            if (dlgSave.ShowDialog() != DialogResult.OK)
+                            {
+                                return;
+                            }
+
+                            ExcelPackage.License.SetNonCommercialPersonal("mkdev");
+                            using (var package = new ExcelPackage())
+                            {
+                                var wb = package.Workbook;
+
+                                // Xml node
+                                var ws = wb.Worksheets.Add("Xml node");
+                                ws.Cells["A1"].Value = dlgOpen.FileName;
+                                var range = ws.Cells["A3"].LoadFromDataTable(nodes, c =>
+                                {
+                                    c.PrintHeaders = true;
+                                    c.TableStyle = TableStyles.Light8;
+                                });
+
+                                for (int i = 1; i <= range.Columns; i++)
+                                {
+                                    ws.Column(i).Width = 12;
+                                }
+
+                                package.SaveAs(new FileInfo(dlgSave.FileName));
+                            }
+
+                            DialogResult result = MessageBox.Show("The file has been saved successfully.\r\nDo you want to open it?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                            if (result == DialogResult.Yes)
+                            {
+                                Process.Start(new ProcessStartInfo(dlgSave.FileName) { UseShellExecute = true });
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
         private void ViewExportAll()
         {
-            DialogResult result = MessageBox.Show("This may take a few seconds.", "Export", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+            DialogResult result = MessageBox.Show("This may take a few seconds.\r\nDo you want to continue?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
-                ExportToExcel(true);
+                ViewExportBase(true);
             }
         }
 
         private void ViewExportFromSelectedEntities()
         {
-            ExportToExcel(false);
+            ViewExportBase(false);
         }
 
-        private void ExportToExcel(bool includeAll)
+        private void ViewExportBase(bool includeAll)
         {
             var selectedEntities = new List<EntityModel>();
 
@@ -462,7 +555,7 @@ namespace StandardViewCreator
 
                 if (selectedEntities.Count == 0)
                 {
-                    MessageBox.Show("At least one entity must be selected.");
+                    MessageBox.Show("At least one entity must be selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
@@ -493,6 +586,7 @@ namespace StandardViewCreator
                     }
 
                     nodes.Reset();
+                    // Option columns
                     nodes.Columns.Add("Guid");
                     nodes.Columns.Add("Entity");
                     nodes.Columns.Add("Type");
@@ -500,6 +594,7 @@ namespace StandardViewCreator
                     nodes.Columns.Add("IsDefault");
                     nodes.Columns.Add("Name");
                     nodes.Columns.Add("XmlType");
+                    // Core columns
                     nodes.Columns.Add("NodeURI");
                     nodes.Columns.Add("ParentNode");
                     nodes.Columns.Add("NodeName");
@@ -529,10 +624,10 @@ namespace StandardViewCreator
                             if (!String.IsNullOrEmpty(fetchxml))
                             {
                                 var xmlDoc = new XmlDocument();
-                                xmlDoc.LoadXml(fetchxml);
+                                xmlDoc.LoadXml(fetchxml);  // Load from a xml string.
                                 XmlNode root = xmlDoc.DocumentElement;
 
-                                ExploreXmlRecursively("fetchxml", root, view);
+                                ExploreXmlRecursively(root, view, "fetchxml");
                             }
                         }
 
@@ -541,10 +636,10 @@ namespace StandardViewCreator
                             if (!String.IsNullOrEmpty(layoutxml))
                             {
                                 var xmlDoc = new XmlDocument();
-                                xmlDoc.LoadXml(layoutxml);
+                                xmlDoc.LoadXml(layoutxml); // Load from a xml string.
                                 XmlNode root = xmlDoc.DocumentElement;
 
-                                ExploreXmlRecursively("layoutxml", root, view);
+                                ExploreXmlRecursively(root, view, "layoutxml");
                             }
                         }
                     }
@@ -556,7 +651,7 @@ namespace StandardViewCreator
                         MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
 
-                    using (SaveFileDialog dlg = new SaveFileDialog())
+                    using (var dlg = new SaveFileDialog())
                     {
                         dlg.Filter = "Excel file(*.xlsx)|*.xlsx";
 
@@ -611,7 +706,7 @@ namespace StandardViewCreator
                                     MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                                 }
 
-                                DialogResult result = MessageBox.Show("The file has been saved successfully.\r\nDo you want to open it?", "Successfully", MessageBoxButtons.YesNo);
+                                DialogResult result = MessageBox.Show("The file has been saved successfully.\r\nDo you want to open it?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                                 if (result == DialogResult.Yes)
                                 {
@@ -623,18 +718,45 @@ namespace StandardViewCreator
                 }
             });
         }
-
-        private void ExploreXmlRecursively(string xmlType, XmlNode node, ViewModel view)
+        private void ExploreXmlRecursively(XmlNode node)
         {
-            ParseXmlToDataTable(xmlType, node, view);
+            var dr = nodes.NewRow();
+
+            // Core columns
+            ParseNodeToDataRow(dr, node);
+
+            nodes.Rows.Add(dr);
 
             foreach (XmlNode childNode in node.ChildNodes)
             {
-                ExploreXmlRecursively(xmlType, childNode, view);
+                ExploreXmlRecursively(childNode);
             }
         }
 
-        private void ParseXmlToDataTable(string xmlType, XmlNode node, ViewModel view)
+        private void ExploreXmlRecursively(XmlNode node, ViewModel view, string xmlType)
+        {
+            var dr = nodes.NewRow();
+
+            // Option columns
+            dr["Guid"] = view.Guid;
+            dr["Entity"] = view.Entity;
+            dr["Type"] = view.Type;
+            dr["QueryType"] = view.QueryType;
+            dr["IsDefault"] = view.IsDefault;
+            dr["Name"] = view.Name;
+            dr["XmlType"] = xmlType;
+            // Core columns
+            ParseNodeToDataRow(dr, node);
+
+            nodes.Rows.Add(dr);
+
+            foreach (XmlNode childNode in node.ChildNodes)
+            {
+                ExploreXmlRecursively(childNode, view, xmlType);
+            }
+        }
+
+        private void ParseNodeToDataRow(DataRow dr, XmlNode node)
         {
             var nodeAttributes = new List<(string Name, string Value)>();
             var nodePath = new List<(string Name, string Value)>();
@@ -647,14 +769,6 @@ namespace StandardViewCreator
                 }
             }
 
-            var dr = nodes.NewRow();
-            dr["Guid"] = view.Guid;
-            dr["Entity"] = view.Entity;
-            dr["Type"] = view.Type;
-            dr["QueryType"] = view.QueryType;
-            dr["IsDefault"] = view.IsDefault;
-            dr["Name"] = view.Name;
-            dr["XmlType"] = xmlType;
             dr["NodeURI"] = String.Join(".", GetNodePath(node));
             dr["ParentNode"] = node.ParentNode?.LocalName;
             dr["NodeName"] = node.LocalName;
@@ -676,9 +790,6 @@ namespace StandardViewCreator
                     dr[attributeName] = attribute.Value;
                 }
             }
-
-            nodes.Rows.Add(dr);
-
         }
 
         private string GetQueryTypeLabel(int queryType)
@@ -748,7 +859,7 @@ namespace StandardViewCreator
 
             if (solutionComponents.Entities.Count == 0)
             {
-                MessageBox.Show("No entities found in solution.");
+                MessageBox.Show("No entities found in solution.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -882,7 +993,7 @@ namespace StandardViewCreator
         {
             if (String.IsNullOrWhiteSpace(tlpViewOptions_txtName.Text))
             {
-                MessageBox.Show("Name is required.");
+                MessageBox.Show("Name is required.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 tlpViewOptions_txtName.Focus();
                 return;
             }
@@ -893,7 +1004,7 @@ namespace StandardViewCreator
 
             if (selectedEntities.Count == 0)
             {
-                MessageBox.Show("At least one entity must be selected.");
+                MessageBox.Show("At least one entity must be selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -910,16 +1021,16 @@ namespace StandardViewCreator
 
             if (selectedColumns.Count == 0)
             {
-                MessageBox.Show("At least one column must be selected.");
+                MessageBox.Show("At least one column must be selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             // 0: User view
             // 1: Public view
-            int viewTypeCmd = int.Parse(tlpViewOptions_cmbType.Text[0].ToString());
+            int typeCmdValue = int.Parse(tlpViewOptions_cmbType.Text[0].ToString());
             string queryTable = String.Empty;
 
-            switch (viewTypeCmd)
+            switch (typeCmdValue)
             {
                 case 0:
                     queryTable = "userquery";
@@ -928,35 +1039,35 @@ namespace StandardViewCreator
                     queryTable = "savedquery";
                     break;
                 default:
-                    MessageBox.Show("Type: An unexpected item has been selected.");
+                    MessageBox.Show("Type: An unexpected item has been selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
             }
 
-            // 0: Allow (Disable overwrite)
-            // 1: Disallow (Enable overwrite)
-            int viewDuplicateCmd = int.Parse(tlpViewOptions_cmbOverwrite.Text[0].ToString());
-            bool allowDuplicate = false;
+            // 0: Disable overwrite
+            // 1: Enable overwrite
+            int overwriteCmdValue = int.Parse(tlpViewOptions_cmbOverwrite.Text[0].ToString());
+            bool disableOverwrite = true;
 
-            switch (viewDuplicateCmd)
+            switch (overwriteCmdValue)
             {
                 case 0:
-                    allowDuplicate = true;
+                    disableOverwrite = true;
                     break;
                 case 1:
-                    allowDuplicate = false;
+                    disableOverwrite = false;
                     break;
                 default:
-                    MessageBox.Show("Duplicate: An unexpected item has been selected.");
+                    MessageBox.Show("Overwrite: An unexpected item has been selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
             }
 
             // 0: All (No filter)
             // 1: Active only
             // 2: Inactive only
-            int viewFilterCmd = int.Parse(tlpViewOptions_cmbFilter.Text[0].ToString());
+            int filterCmdValue = int.Parse(tlpViewOptions_cmbFilter.Text[0].ToString());
             string filterNode = String.Empty;
 
-            switch (viewFilterCmd)
+            switch (filterCmdValue)
             {
                 case 0:
                     filterNode = String.Empty;
@@ -968,7 +1079,7 @@ namespace StandardViewCreator
                     filterNode = "<filter><condition attribute='statecode' operator='eq' value='1' /></filter>";
                     break;
                 default:
-                    MessageBox.Show("Filter: An unexpected item has been selected.");
+                    MessageBox.Show("Filter: An unexpected item has been selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
             }
 
@@ -980,7 +1091,7 @@ namespace StandardViewCreator
                 $"  Organization: {ConnectionDetail.OrganizationFriendlyName} [{ConnectionDetail.Organization}]",
                 $"  WebApplicationUrl: {ConnectionDetail.WebApplicationUrl}",
                 $"  UserName: {ConnectionDetail.UserName}",
-            }), "Create View", MessageBoxButtons.YesNo);
+            }), "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result != DialogResult.Yes)
             {
@@ -1099,7 +1210,7 @@ namespace StandardViewCreator
                     var results = args.Result as HashSet<Guid>;
                     if (results != null)
                     {
-                        MessageBox.Show("View created.");
+                        MessageBox.Show("View created.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             });
@@ -1388,6 +1499,11 @@ namespace StandardViewCreator
         private void ddbSaveAs_itemPersonal_Click(object sender, EventArgs e)
         {
             ExecuteMethod(DuplicateAsUserView);
+        }
+
+        private void ddbExport_itemLoadXML_Click(object sender, EventArgs e)
+        {
+            ExcelExportFromLoadedXml(); // No DataVerse operations.
         }
     }
 }
