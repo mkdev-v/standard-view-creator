@@ -17,6 +17,7 @@ using System.Web.UI.WebControls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Forms;
+using System.Windows.Shapes;
 using System.Xml;
 using System.Xml.Linq;
 using McTools.Xrm.Connection;
@@ -27,10 +28,11 @@ using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Organization;
 using Microsoft.Xrm.Sdk.Query;
-using OfficeOpenXml;
-using OfficeOpenXml.Table;
-using XrmToolBox.Extensibility;
+using MiniExcelLibs;
+using MiniExcelLibs.OpenXml;
 using StandardViewCreator.Models;
+using StandardViewCreator.MyDataTable;
+using XrmToolBox.Extensibility;
 
 namespace StandardViewCreator
 {
@@ -38,7 +40,9 @@ namespace StandardViewCreator
     {
         private Settings mySettings;
 
-        private DataTable nodes = new DataTable();
+        private DataTable dtNodes = new DataTable("Xml node");
+        private DataTable dtViews = new DataTable("Views list");
+        private DataTable dtFiles = new DataTable("Load files");
 
         public StandardViewCreatorControl()
         {
@@ -69,8 +73,11 @@ namespace StandardViewCreator
             tlpOrder_cmbOrder.SelectedIndex = 0;
 
             // Set tooltip
-            txtName_tip.SetToolTip(tlpViewOptions_lblName, "Available: {entityLogicalName}, {entityDisplayName}, {yyyyMMdd}");
+            txtName_tip.SetToolTip(tlpViewOptions_lblName, "Available: {!EntityLogicalName}, {!EntityDisplayName}, {!yyyyMMdd}");
             cmbOverwrite_tip.SetToolTip(tlpViewOptions_lblOverwrite, "Update mode unavailable. Running in create mode.");
+
+            // Set textbox
+            tlpViewOptions_txtName.Text = "My View - {!EntityDisplayName} - {!yyyyMMdd}";
         }
 
 
@@ -213,6 +220,7 @@ namespace StandardViewCreator
                 <attribute name='layoutxml' />
                 <attribute name='name' />
                 <attribute name='querytype' />
+                <attribute name='statecode' />
                 <attribute name='returnedtypecode' />
                 <order attribute='returnedtypecode' />
                 <order attribute='name' />
@@ -248,6 +256,8 @@ namespace StandardViewCreator
                     <attribute name='name' />
                     <attribute name='querytype' />
                     <attribute name='isdefault' />
+                    <attribute name='ismanaged' />
+                    <attribute name='statecode' />
                     <attribute name='returnedtypecode' />
                     <order attribute='returnedtypecode' />
                     <order attribute='querytype' />
@@ -375,9 +385,12 @@ namespace StandardViewCreator
                         MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
 
-                    if (queries.Count > 0)
+                    if (queries.Count == 0)
                     {
-                        var items = queries
+                        return;
+                    }
+
+                    var items = queries
                             .Select(s => new ViewModel
                             {
                                 Guid = s.Id,
@@ -387,147 +400,171 @@ namespace StandardViewCreator
                             })
                             .ToList();
 
-                        using (var form = new ViewSelector(items))
+                    var selectedItems = new List<ViewModel>();
+
+                    using (var form = new ViewSelector(items))
+                    {
+                        if (form.ShowDialog() != DialogResult.OK)
                         {
-                            if (form.ShowDialog() == DialogResult.OK)
-                            {
-                                WorkAsync(new WorkAsyncInfo
-                                {
-                                    Message = "Duplicating view...",
-                                    Work = (worker, args2) =>
-                                    {
-                                        var selected = form.SelectedItem;
-
-                                        var query = SafeRetrieve(selected.Type, selected.Guid, new ColumnSet(true));
-
-                                        if (query.Id == null)
-                                        {
-                                            return;
-                                        }
-
-                                        var create = new Entity()
-                                        {
-                                            ["name"] = query.GetAttributeValue<string>("name"),
-                                            ["fetchxml"] = query.GetAttributeValue<string>("fetchxml"),
-                                            ["layoutxml"] = query.GetAttributeValue<string>("layoutxml"),
-                                            ["returnedtypecode"] = query.GetAttributeValue<string>("returnedtypecode"),
-                                            ["querytype"] = 0,
-                                        };
-
-                                        if (asPublicView)
-                                        {
-                                            create.LogicalName = "savedquery";
-                                            var id = SafeCreate(create);
-                                        }
-
-                                        if (asUserView)
-                                        {
-                                            create.LogicalName = "userquery";
-                                            var id = SafeCreate(create);
-                                        }
-                                    },
-                                    PostWorkCallBack = (args2) =>
-                                    {
-                                        MessageBox.Show("View duplicated.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                    }
-                                });
-                                
-                            }
+                            return;
                         }
+
+                        selectedItems.Add(form.SelectedItem);
                     }
+
+                    WorkAsync(new WorkAsyncInfo
+                    {
+                        Message = "Duplicating view...",
+                        Work = (worker, args2) =>
+                        {
+                            foreach (var selectedItem in selectedItems)
+                            {
+                                var query = SafeRetrieve(selectedItem.Type, selectedItem.Guid, new ColumnSet(true));
+
+                                if (query.Id == null)
+                                {
+                                    continue;
+                                }
+
+                                var create = new Entity()
+                                {
+                                    ["name"] = query.GetAttributeValue<string>("name"),
+                                    ["fetchxml"] = query.GetAttributeValue<string>("fetchxml"),
+                                    ["layoutxml"] = query.GetAttributeValue<string>("layoutxml"),
+                                    ["returnedtypecode"] = query.GetAttributeValue<string>("returnedtypecode"),
+                                    ["querytype"] = 0,
+                                };
+
+                                if (asPublicView)
+                                {
+                                    create.LogicalName = "savedquery";
+                                    var id = SafeCreate(create);
+                                }
+
+                                if (asUserView)
+                                {
+                                    create.LogicalName = "userquery";
+                                    var id = SafeCreate(create);
+                                }
+                            }
+                        },
+                        PostWorkCallBack = (args2) =>
+                        {
+                            MessageBox.Show("View duplicated.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    });
                 }
             });
         }
 
         private void ExcelExportFromLoadedXml()
         {
-            using (var dlgOpen = new OpenFileDialog())
+            var openPaths = SelectOpenXmlPath();
+
+            if (openPaths.Length == 0)
             {
-                dlgOpen.Filter = "XML file(*.xml)|*.xml";
+                return;
+            }
 
-                if (dlgOpen.ShowDialog() != DialogResult.OK)
+            WorkAsync(new WorkAsyncInfo
+            {
+                Message = "Loading xml...",
+                Work = (worker, args) =>
                 {
-                    return;
-                }
+                    dtFiles.Reset();
+                    dtFiles.Columns.Add(Columns.FilePath);
 
-                var xmlDoc = new XmlDocument();
+                    dtNodes.Reset();
+                    // Option columns
+                    dtNodes.Columns.Add(Columns.FileName);
+                    // Core columns
+                    dtNodes.Columns.Add(Columns.NodeURI);
+                    dtNodes.Columns.Add(Columns.ParentNode);
+                    dtNodes.Columns.Add(Columns.NodeName);
+                    // dtNodes.Columns.Add(Columns.InnerXml);
+                    dtNodes.Columns.Add(Columns.NodeValue);
+                    dtNodes.Columns.Add(Columns.NodeAttributes);
+                    dtNodes.Columns.Add(Columns.AttributeName);
+                    dtNodes.Columns.Add(Columns.AttributeValue);
 
-                try
-                {
-                    xmlDoc.Load(dlgOpen.FileName); // Load from a XML file
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to load XML: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                XmlNode root = xmlDoc.DocumentElement;
-
-                WorkAsync(new WorkAsyncInfo
-                {
-                    Message = "Loading xml...",
-                    Work = (worker, args) =>
+                    foreach (var openPath in openPaths)
                     {
-                        nodes.Reset();
-                        // Core columns
-                        nodes.Columns.Add("NodeURI");
-                        nodes.Columns.Add("ParentNode");
-                        nodes.Columns.Add("NodeName");
-                        nodes.Columns.Add("InnerXml");
-                        nodes.Columns.Add("NodeValue");
-                        nodes.Columns.Add("NodeAttributes");
+                        var xmlDoc = new XmlDocument();
 
-                        ExploreXmlRecursively(root);
-                    },
-                    PostWorkCallBack = (args) =>
-                    {
-                        if (args.Error != null)
+                        try
                         {
-                            MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            xmlDoc.Load(openPath); // Load from a XML file
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Failed to load XML: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
                         }
 
-                        using (var dlgSave = new SaveFileDialog())
-                        {
-                            dlgSave.Filter = "Excel file(*.xlsx)|*.xlsx";
+                        XmlNode root = xmlDoc.DocumentElement;
+                        ParseLocalXmlToDataTable(root, System.IO.Path.GetFileName(openPath));
 
-                            if (dlgSave.ShowDialog() != DialogResult.OK)
+                        var dr = dtFiles.NewRow();
+                        dr[Columns.FilePath] = openPath;
+                        dtFiles.Rows.Add(dr);
+                    }
+                },
+                PostWorkCallBack = (args) =>
+                {
+                    if (args.Error != null)
+                    {
+                        MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+
+                    var savePath = SelectSaveExcelPath();
+
+                    if (String.IsNullOrEmpty(savePath))
+                    {
+                        return;
+                    }
+
+                    WorkAsync(new WorkAsyncInfo
+                    {
+                        Message = "Exporting xmls...",
+                        Work = (worker, args2) =>
+                        {
+                            var sheets = new DataSet();
+                            // Use Copy() because a DataTable cannot belong to multiple DataSets.
+                            sheets.Tables.Add(dtFiles.Copy());
+                            sheets.Tables.Add(dtNodes.Copy());
+
+                            var config = new OpenXmlConfiguration()
                             {
+                                TableStyles = MiniExcelLibs.OpenXml.TableStyles.None
+                            };
+
+                            try
+                            {
+                                MiniExcel.SaveAs(savePath, sheets, configuration: config, overwriteFile: true);
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show("Failed to save file: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                                 return;
                             }
-
-                            ExcelPackage.License.SetNonCommercialPersonal("mkdev");
-                            using (var package = new ExcelPackage())
+                        },
+                        PostWorkCallBack = (args2) =>
+                        {
+                            if (args2.Error != null)
                             {
-                                var wb = package.Workbook;
-
-                                // Xml node
-                                var ws = wb.Worksheets.Add("Xml node");
-                                ws.Cells["A1"].Value = dlgOpen.FileName;
-                                var range = ws.Cells["A3"].LoadFromDataTable(nodes, c =>
-                                {
-                                    c.PrintHeaders = true;
-                                    c.TableStyle = TableStyles.Light8;
-                                });
-
-                                for (int i = 1; i <= range.Columns; i++)
-                                {
-                                    ws.Column(i).Width = 12;
-                                }
-
-                                package.SaveAs(new FileInfo(dlgSave.FileName));
+                                MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             }
 
                             DialogResult result = MessageBox.Show("The file has been saved successfully.\r\nDo you want to open it?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                             if (result == DialogResult.Yes)
                             {
-                                Process.Start(new ProcessStartInfo(dlgSave.FileName) { UseShellExecute = true });
+                                Process.Start(new ProcessStartInfo(savePath) { UseShellExecute = true });
                             }
                         }
-                    }
-                });
-            }
+                    });
+                }
+            });
         }
 
         private void ViewExportAll()
@@ -585,39 +622,56 @@ namespace StandardViewCreator
                         queries.AddRange(userQueries.Entities.ToList());
                     }
 
-                    nodes.Reset();
+                    dtViews.Reset();
+                    dtViews.Columns.Add(Columns.Guid);
+                    dtViews.Columns.Add(Columns.Entity);
+                    dtViews.Columns.Add(Columns.Type);
+                    dtViews.Columns.Add(Columns.Name);
+                    dtViews.Columns.Add(Columns.QueryType);
+                    dtViews.Columns.Add(Columns.IsDefault);
+                    dtViews.Columns.Add(Columns.Status);
+                    dtViews.Columns.Add(Columns.IsManaged);
+                    dtViews.Columns.Add(Columns.FetchXml);
+                    dtViews.Columns.Add(Columns.LayoutXml);
+
+                    dtNodes.Reset();
                     // Option columns
-                    nodes.Columns.Add("Guid");
-                    nodes.Columns.Add("Entity");
-                    nodes.Columns.Add("Type");
-                    nodes.Columns.Add("QueryType");
-                    nodes.Columns.Add("IsDefault");
-                    nodes.Columns.Add("Name");
-                    nodes.Columns.Add("XmlType");
+                    dtNodes.Columns.Add(Columns.Guid);
+                    dtNodes.Columns.Add(Columns.Entity);
+                    dtNodes.Columns.Add(Columns.Type);
+                    dtNodes.Columns.Add(Columns.Name);
+                    dtNodes.Columns.Add(Columns.QueryType);
+                    dtNodes.Columns.Add(Columns.IsDefault);
+                    dtNodes.Columns.Add(Columns.Status);
+                    dtNodes.Columns.Add(Columns.IsManaged);
+                    dtNodes.Columns.Add(Columns.XmlType);
                     // Core columns
-                    nodes.Columns.Add("NodeURI");
-                    nodes.Columns.Add("ParentNode");
-                    nodes.Columns.Add("NodeName");
-                    nodes.Columns.Add("InnerXml");
-                    nodes.Columns.Add("NodeValue");
-                    nodes.Columns.Add("NodeAttributes");
+                    dtNodes.Columns.Add(Columns.NodeURI);
+                    dtNodes.Columns.Add(Columns.ParentNode);
+                    dtNodes.Columns.Add(Columns.NodeName);
+                    // dtNodes.Columns.Add(Columns.InnerXml);
+                    dtNodes.Columns.Add(Columns.NodeValue);
+                    dtNodes.Columns.Add(Columns.NodeAttributes);
+                    dtNodes.Columns.Add(Columns.AttributeName);
+                    dtNodes.Columns.Add(Columns.AttributeValue);
 
                     // View node
                     foreach (var entity in queries)
                     {
-                        var view = new ViewModel()
-                        {
-                            Guid = entity.Id,
-                            Type = entity.LogicalName,
-                            Entity = entity.GetAttributeValue<string>("returnedtypecode"),
-                            QueryType = GetQueryTypeLabel(entity.GetAttributeValue<int>("querytype")),
-                            IsDefault = entity.GetAttributeValue<bool?>("isdefault"),
-                            Name = entity.GetAttributeValue<string>("name"),
-                            FetchXml = entity.GetAttributeValue<string>("fetchxml"),
-                            LayoutXml = entity.GetAttributeValue<string>("layoutxml"),
-                        };
+                        var dr = dtViews.NewRow();
 
-                        views.Add(view);
+                        dr[Columns.Guid] = entity.Id;
+                        dr[Columns.Entity] = entity.GetAttributeValue<string>("returnedtypecode");
+                        dr[Columns.Type] = entity.LogicalName;
+                        dr[Columns.Name] = entity.GetAttributeValue<string>("name");
+                        dr[Columns.QueryType] = GetQueryTypeLabel(entity.GetAttributeValue<int>("querytype"));
+                        dr[Columns.IsDefault] = ValidateFormattedValue(entity, "isdefault");
+                        dr[Columns.Status] = ValidateFormattedValue(entity, "statecode");
+                        dr[Columns.IsManaged] = ValidateFormattedValue(entity, "ismanaged");
+                        dr[Columns.FetchXml] = entity.GetAttributeValue<string>("fetchxml");
+                        dr[Columns.LayoutXml] = entity.GetAttributeValue<string>("layoutxml");
+
+                        dtViews.Rows.Add(dr);
 
                         if (entity.TryGetAttributeValue<string>("fetchxml", out string fetchxml))
                         {
@@ -627,7 +681,7 @@ namespace StandardViewCreator
                                 xmlDoc.LoadXml(fetchxml);  // Load from a xml string.
                                 XmlNode root = xmlDoc.DocumentElement;
 
-                                ExploreXmlRecursively(root, view, "fetchxml");
+                                ParseViewXmlToDataTable(root, dr, "fetchxml");
                             }
                         }
 
@@ -639,7 +693,7 @@ namespace StandardViewCreator
                                 xmlDoc.LoadXml(layoutxml); // Load from a xml string.
                                 XmlNode root = xmlDoc.DocumentElement;
 
-                                ExploreXmlRecursively(root, view, "layoutxml");
+                                ParseViewXmlToDataTable(root, dr, "layoutxml");
                             }
                         }
                     }
@@ -651,108 +705,95 @@ namespace StandardViewCreator
                         MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
 
-                    using (var dlg = new SaveFileDialog())
+                    var savePath = SelectSaveExcelPath();
+
+                    if (String.IsNullOrEmpty(savePath))
                     {
-                        dlg.Filter = "Excel file(*.xlsx)|*.xlsx";
-
-                        if (dlg.ShowDialog() != DialogResult.OK)
-                        {
-                            return;
-                        }
-
-                        WorkAsync(new WorkAsyncInfo
-                        {
-                            Message = "Exporting views...",
-                            Work = (worker, args2) =>
-                            {
-                                ExcelPackage.License.SetNonCommercialPersonal("mkdev");
-                                using (var package = new ExcelPackage())
-                                {
-                                    var wb = package.Workbook;
-
-                                    // Views list
-                                    var ws1 = wb.Worksheets.Add("Views list");
-                                    var range1 = ws1.Cells["A3"].LoadFromCollection(views, c =>
-                                    {
-                                        c.PrintHeaders = true;
-                                        c.TableStyle = TableStyles.Light8;
-                                    });
-
-                                    for (int i = 1; i <= range1.Columns; i++)
-                                    {
-                                        ws1.Column(i).Width = 12;
-                                    }
-
-                                    // Xml node
-                                    var ws2 = wb.Worksheets.Add("Xml node");
-                                    var range2 = ws2.Cells["A3"].LoadFromDataTable(nodes, c =>
-                                    {
-                                        c.PrintHeaders = true;
-                                        c.TableStyle = TableStyles.Light8;
-                                    });
-
-                                    for (int i = 1; i <= range2.Columns; i++)
-                                    {
-                                        ws2.Column(i).Width = 12;
-                                    }
-
-                                    package.SaveAs(new FileInfo(dlg.FileName));
-                                }
-                            },
-                            PostWorkCallBack = (args2) =>
-                            {
-                                if (args2.Error != null)
-                                {
-                                    MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                }
-
-                                DialogResult result = MessageBox.Show("The file has been saved successfully.\r\nDo you want to open it?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                                if (result == DialogResult.Yes)
-                                {
-                                    Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
-                                }
-                            }
-                        });
+                        return;
                     }
+
+                    WorkAsync(new WorkAsyncInfo
+                    {
+                        Message = "Exporting views...",
+                        Work = (worker, args2) =>
+                        {
+                            var sheets = new DataSet();
+                            // Use Copy() because a DataTable cannot belong to multiple DataSets.
+                            sheets.Tables.Add(dtViews.Copy());
+                            sheets.Tables.Add(dtNodes.Copy());
+
+                            var config = new OpenXmlConfiguration()
+                            {
+                                TableStyles = MiniExcelLibs.OpenXml.TableStyles.None
+                            };
+
+                            try
+                            {
+                                MiniExcel.SaveAs(savePath, sheets, configuration: config, overwriteFile: true);
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show("Failed to save file: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+                        },
+                        PostWorkCallBack = (args2) =>
+                        {
+                            if (args2.Error != null)
+                            {
+                                MessageBox.Show(args.Error.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+
+                            DialogResult result = MessageBox.Show("The file has been saved successfully.\r\nDo you want to open it?", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                            if (result == DialogResult.Yes)
+                            {
+                                Process.Start(new ProcessStartInfo(savePath) { UseShellExecute = true });
+                            }
+                        }
+                    });
                 }
             });
         }
-        private void ExploreXmlRecursively(XmlNode node)
+        private void ParseLocalXmlToDataTable(XmlNode node, string fileName)
         {
-            var dr = nodes.NewRow();
+            var dr = dtNodes.NewRow();
 
+            // Option columns
+            dr[Columns.FileName] = fileName;
             // Core columns
             ParseNodeToDataRow(dr, node);
 
-            nodes.Rows.Add(dr);
+            // dtNodes.Rows.Add(dr);
 
             foreach (XmlNode childNode in node.ChildNodes)
             {
-                ExploreXmlRecursively(childNode);
+                ParseLocalXmlToDataTable(childNode, fileName);
             }
         }
 
-        private void ExploreXmlRecursively(XmlNode node, ViewModel view, string xmlType)
+        private void ParseViewXmlToDataTable(XmlNode node, DataRow view, string xmlType)
         {
-            var dr = nodes.NewRow();
+            var dr = dtNodes.NewRow();
 
             // Option columns
-            dr["Guid"] = view.Guid;
-            dr["Entity"] = view.Entity;
-            dr["Type"] = view.Type;
-            dr["QueryType"] = view.QueryType;
-            dr["IsDefault"] = view.IsDefault;
-            dr["Name"] = view.Name;
-            dr["XmlType"] = xmlType;
+            dr[Columns.Guid] = view.Field<string>(Columns.Guid);
+            dr[Columns.Entity] = view.Field<string>(Columns.Entity);
+            dr[Columns.Type] = view.Field<string>(Columns.Type);
+            dr[Columns.Name] = view.Field<string>(Columns.Name);
+            dr[Columns.QueryType] = view.Field<string>(Columns.QueryType);
+            dr[Columns.IsDefault] = view.Field<string>(Columns.IsDefault);
+            dr[Columns.Status] = view.Field<string>(Columns.Status);
+            dr[Columns.IsManaged] = view.Field<string>(Columns.IsManaged);
+            dr[Columns.XmlType] = xmlType;
             // Core columns
             ParseNodeToDataRow(dr, node);
 
-            nodes.Rows.Add(dr);
+            // dtNodes.Rows.Add(dr);
 
             foreach (XmlNode childNode in node.ChildNodes)
             {
-                ExploreXmlRecursively(childNode, view, xmlType);
+                ParseViewXmlToDataTable(childNode, view, xmlType);
             }
         }
 
@@ -768,27 +809,53 @@ namespace StandardViewCreator
                     nodeAttributes.Add((attribute.LocalName, attribute.Value));
                 }
             }
-
-            dr["NodeURI"] = String.Join(".", GetNodePath(node));
-            dr["ParentNode"] = node.ParentNode?.LocalName;
-            dr["NodeName"] = node.LocalName;
-            dr["InnerXml"] = node.InnerXml;
-            dr["NodeValue"] = ValidateEmptyValue(node.Value);
-            dr["NodeAttributes"] = "{" + $"{String.Join(", ", nodeAttributes.Select(s => $"\"{s.Name}\": \"{s.Value}\"").ToArray())}" + "}";
+            
+            dr[Columns.NodeURI] = GetNodePath(node);
+            dr[Columns.ParentNode] = node.ParentNode?.LocalName;
+            dr[Columns.NodeName] = node.LocalName;
+            // Cut off if length exceeds Excel's limit (32767 chars)
+            // dr[Columns.InnerXml] = CheckStringLength(node.InnerXml); 
+            dr[Columns.NodeValue] = ValidateEmptyValue(node.Value);
+            dr[Columns.NodeAttributes] = "{" + $"{String.Join(", ", nodeAttributes.Select(s => $"\"{s.Name}\": \"{s.Value}\"").ToArray())}" + "}";
 
             if (node.Attributes != null)
             {
                 foreach (XmlAttribute attribute in node.Attributes)
                 {
-                    var attributeName = $"NodeAttributes.{attribute.Name}";
+                    var drExpand = dtNodes.NewRow();
+                    drExpand.ItemArray = dr.ItemArray;
 
-                    if (!nodes.Columns.Contains(attributeName))
-                    {
-                        nodes.Columns.Add(attributeName);
-                    }
+                    var attributeName = $"{node.Name}.{attribute.Name}";
 
-                    dr[attributeName] = attribute.Value;
+                    drExpand[Columns.AttributeName] = attributeName;
+                    drExpand[Columns.AttributeValue] = attribute.Value;
+
+                    dtNodes.Rows.Add(drExpand);
+
+                    // var attributeName = $"{Columns.NodeAttributes}.{attribute.Name}";
+                    // 
+                    // if (!dtNodes.Columns.Contains(attributeName))
+                    // {
+                    //     dtNodes.Columns.Add(attributeName);
+                    // }
+                    // 
+                    // dr[attributeName] = attribute.Value;
                 }
+            } else
+            {
+                dtNodes.Rows.Add(dr);
+            }
+        }
+
+        private string CheckStringLength(string value)
+        {
+            if (!String.IsNullOrEmpty(value) && value.Length > 32767)
+            {
+                return "{value too long}";
+            }
+            else
+            {
+                return value;
             }
         }
 
@@ -827,7 +894,7 @@ namespace StandardViewCreator
             }
         }
 
-        private List<string> GetNodePath(XmlNode node)
+        private List<string> ParseParentNodes(XmlNode node)
         {
             if (node.ParentNode == null)
             {
@@ -835,10 +902,17 @@ namespace StandardViewCreator
             }
             else
             {
-                var result = GetNodePath(node.ParentNode);
+                var result = ParseParentNodes(node.ParentNode);
                 result.Add(node.LocalName);
                 return result;
             }
+        }
+
+        private string GetNodePath(XmlNode node)
+        {
+            var result = ParseParentNodes(node);
+
+            return String.Join("/", result);
         }
 
         private string ValidateEmptyValue(string value)
@@ -853,6 +927,18 @@ namespace StandardViewCreator
             }
         }
 
+        private string ValidateFormattedValue(Entity entity, string attributeName)
+        {
+            if (entity.FormattedValues.Contains(attributeName))
+            {
+                return entity.FormattedValues[attributeName];
+            }
+            else
+            {
+                return String.Empty;
+            }
+        }
+
         private void GetEntitiesFromSolution(string solutionId)
         {
             var solutionComponents = GetSolutionComponents(solutionId);
@@ -863,80 +949,75 @@ namespace StandardViewCreator
                 return;
             }
 
-            if (solutionComponents.Entities.Count > 0)
+            var Entities = new List<EntityModel>();
+
+            WorkAsync(new WorkAsyncInfo
             {
-                WorkAsync(new WorkAsyncInfo
+                // Access form components inside PostWorkCallBack to avoid potential runtime errors.
+
+                Message = "Getting entities from solution...",
+                Work = (worker, args) =>
                 {
-                    // Access form components inside PostWorkCallBack to avoid potential runtime errors.
+                    var entityMetadataIds = solutionComponents.Entities
+                        .Select(s => s.GetAttributeValue<Guid>("objectid"))
+                        .ToHashSet();
 
-                    Message = "Getting entities from solution...",
-                    Work = (worker, args) =>
+                    var request = new RetrieveAllEntitiesRequest
                     {
-                        var entityMetadataIds = solutionComponents.Entities
-                            .Select(s => s.GetAttributeValue<Guid>("objectid"))
-                            .ToHashSet();
+                        EntityFilters = EntityFilters.Entity,
+                    };
+                    RetrieveAllEntitiesResponse allEntities = null;
 
-                        var request = new RetrieveAllEntitiesRequest
-                        {
-                            EntityFilters = EntityFilters.Entity,
-                        };
-                        RetrieveAllEntitiesResponse allEntities = null;
-
-                        try
-                        {
-                            allEntities = (RetrieveAllEntitiesResponse)Service.Execute(request);
-                        }
-                        catch (FaultException<OrganizationServiceFault> fault)
-                        {
-                            MessageBox.Show(
-                                $"An error occurred while executing request:\n{fault.Detail.Message}",
-                                "CRM Execute Error",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                            return;
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show(
-                                $"An unexpected error occurred:\n{ex.Message}",
-                                "Unexpected Error",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                            return;
-                        }
-
-                        var Entities = allEntities.EntityMetadata
-                            .Where(w => entityMetadataIds.Contains((Guid)w.MetadataId))
-                            .Select(s => new EntityModel
-                            {
-                                DisplayName = s.DisplayName.UserLocalizedLabel.Label,
-                                LogicalName = s.LogicalName,
-                                PrimaryNameAttribute = s.PrimaryNameAttribute,
-                                IsValidForAdvancedFind = s.IsValidForAdvancedFind,
-                                ObjectTypeCode = s.ObjectTypeCode,
-                                PrimaryIdAttribute = s.PrimaryIdAttribute,
-                            })
-                            .OrderBy(o => o.LogicalName)
-                            .ToList();
-
-                        args.Result = Entities;
-
-                    },
-                    PostWorkCallBack = (args) =>
+                    try
                     {
-                        var Entities = args.Result as List<EntityModel>;
-
-                        tlpEntity_lvwEntities.Items.Clear();
-
-                        foreach (var entity in Entities)
-                        {
-                            var item = new System.Windows.Forms.ListViewItem(entity.ToStringArray());
-                            item.Tag = entity;
-                            tlpEntity_lvwEntities.Items.Add(item);
-                        }
+                        allEntities = (RetrieveAllEntitiesResponse)Service.Execute(request);
                     }
-                });
-            }
+                    catch (FaultException<OrganizationServiceFault> fault)
+                    {
+                        MessageBox.Show(
+                            $"An error occurred while executing request:\n{fault.Detail.Message}",
+                            "CRM Execute Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(
+                            $"An unexpected error occurred:\n{ex.Message}",
+                            "Unexpected Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    Entities = allEntities.EntityMetadata
+                        .Where(w => entityMetadataIds.Contains((Guid)w.MetadataId))
+                        .Select(s => new EntityModel
+                        {
+                            DisplayName = s.DisplayName.UserLocalizedLabel.Label,
+                            LogicalName = s.LogicalName,
+                            PrimaryNameAttribute = s.PrimaryNameAttribute,
+                            IsValidForAdvancedFind = s.IsValidForAdvancedFind,
+                            ObjectTypeCode = s.ObjectTypeCode,
+                            PrimaryIdAttribute = s.PrimaryIdAttribute,
+                        })
+                        .OrderBy(o => o.LogicalName)
+                        .ToList();
+
+                },
+                PostWorkCallBack = (args) =>
+                {
+                    tlpEntity_lvwEntities.Items.Clear();
+
+                    foreach (var entity in Entities)
+                    {
+                        var item = new System.Windows.Forms.ListViewItem(entity.ToStringArray());
+                        item.Tag = entity;
+                        tlpEntity_lvwEntities.Items.Add(item);
+                    }
+                }
+            });
         }
 
         private OrderModel GetOrder(string logicalName, string sortValue)
@@ -987,7 +1068,6 @@ namespace StandardViewCreator
 
             return selectedEntities;
         }
-
 
         private void CreateView()
         {
@@ -1110,10 +1190,10 @@ namespace StandardViewCreator
                     // Available: {entityLogicalName}, {entityDisplayName}, {yyyyMMdd}
                     string viewName = tlpViewOptions_txtName.Text;
 
-                    string formatPrimaryName = "{primaryAttribute}";
-                    string formatEntityLogicalName = "{entityLogicalName}";
-                    string formatEntityDisplayName = "{entityDisplayName}";
-                    string formatDate = "{yyyyMMdd}";
+                    string formatPrimaryName = "{!PrimaryAttribute}";
+                    string formatEntityLogicalName = "{!EntityLogicalName}";
+                    string formatEntityDisplayName = "{!EntityDisplayName}";
+                    string formatDate = "{!yyyyMMdd}";
 
                     var results = new HashSet<Guid>();
 
@@ -1261,6 +1341,36 @@ namespace StandardViewCreator
             });
         }
 
+        private string SelectSaveExcelPath()
+        {
+            using (var dlg = new SaveFileDialog())
+            {
+                dlg.Filter = "Excel file(*.xlsx)|*.xlsx";
+
+                if (dlg.ShowDialog() != DialogResult.OK)
+                {
+                    return String.Empty;
+                }
+
+                return dlg.FileName;
+            }
+        }
+
+        private string[] SelectOpenXmlPath()
+        {
+            using (var dlg = new OpenFileDialog())
+            {
+                dlg.Filter = "XML file(*.xml)|*.xml";
+                dlg.Multiselect = true;
+
+                if (dlg.ShowDialog() != DialogResult.OK)
+                {
+                    return Array.Empty<string>();
+                }
+
+                return dlg.FileNames;
+            }
+        }
 
         private void CheckAllItems(ListView listView)
         {
@@ -1496,7 +1606,7 @@ namespace StandardViewCreator
             ExecuteMethod(DuplicateAsPublicView);
         }
 
-        private void ddbSaveAs_itemPersonal_Click(object sender, EventArgs e)
+        private void ddbSaveAs_itemUser_Click(object sender, EventArgs e)
         {
             ExecuteMethod(DuplicateAsUserView);
         }

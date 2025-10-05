@@ -11,9 +11,11 @@ namespace StandardViewCreator.Models
         public Guid Guid { get; set; }
         public string Entity { get; set; }
         public string Type { get; set; }
-        public string QueryType { get; set; }
-        public bool? IsDefault { get; set; }
         public string Name { get; set; }
+        public string QueryType { get; set; }
+        public string IsDefault { get; set; }
+        public string Status { get; set; }
+        public string IsManaged { get; set; }
         public string FetchXml { get; set; }
         public string LayoutXml { get; set; }
     }

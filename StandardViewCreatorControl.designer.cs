@@ -29,57 +29,57 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewItem listViewItem12 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
             "Created On",
             "createdon",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem13 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem(new string[] {
             "Created By",
             "createdby",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem14 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
             "Created By (Delegate)",
             "createdonbehalfby",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem15 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem(new string[] {
             "Modified On",
             "modifiedon",
             "↓(1)",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem16 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem5 = new System.Windows.Forms.ListViewItem(new string[] {
             "Modified By",
             "modifiedby",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem17 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem6 = new System.Windows.Forms.ListViewItem(new string[] {
             "Modified By (Delegate)",
             "modifiedonbehalfby",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem18 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem7 = new System.Windows.Forms.ListViewItem(new string[] {
             "Status",
             "statecode",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem19 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem8 = new System.Windows.Forms.ListViewItem(new string[] {
             "Status Reason",
             "statuscode",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem20 = new System.Windows.Forms.ListViewItem(new string[] {
-            "{primaryAttribute}",
-            "{primaryAttribute}",
+            System.Windows.Forms.ListViewItem listViewItem9 = new System.Windows.Forms.ListViewItem(new string[] {
+            "{!PrimaryAttribute}",
+            "{!PrimaryAttribute}",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem21 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem10 = new System.Windows.Forms.ListViewItem(new string[] {
             "Owner",
             "ownerid",
             "",
             "150"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem22 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem11 = new System.Windows.Forms.ListViewItem(new string[] {
             "Owning Business Unit",
             "owningbusinessunit",
             "",
@@ -92,12 +92,14 @@
             this.tsmMain_ddbExport = new System.Windows.Forms.ToolStripDropDownButton();
             this.ddbExport_itemAll = new System.Windows.Forms.ToolStripMenuItem();
             this.ddbExport_itemSelectedEntities = new System.Windows.Forms.ToolStripMenuItem();
+            this.ddbExport_itemLoadXML = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmMain_sep3 = new System.Windows.Forms.ToolStripSeparator();
             this.tsmMain_ddbSaveAs = new System.Windows.Forms.ToolStripDropDownButton();
             this.ddbSaveAs_itemPublic = new System.Windows.Forms.ToolStripMenuItem();
-            this.ddbSaveAs_itemPersonal = new System.Windows.Forms.ToolStripMenuItem();
+            this.ddbSaveAs_itemUser = new System.Windows.Forms.ToolStripMenuItem();
             this.tlpMain = new System.Windows.Forms.TableLayoutPanel();
-            this.tlpMain_gbxEntity = new System.Windows.Forms.GroupBox();
+            this.tlpMain_tlpLeft = new System.Windows.Forms.TableLayoutPanel();
+            this.tlpLeft_gbxEntity = new System.Windows.Forms.GroupBox();
             this.gbxEntity_tlpEntity = new System.Windows.Forms.TableLayoutPanel();
             this.tlpEntity_lvwEntities = new System.Windows.Forms.ListView();
             this.lvwEntities_colDisplayName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -110,17 +112,8 @@
             this.gbxSelect_tlpSelect = new System.Windows.Forms.TableLayoutPanel();
             this.tlpSelect_btnUnselectAll = new System.Windows.Forms.Button();
             this.tlpSelect_btnSelectAll = new System.Windows.Forms.Button();
-            this.tlpMain_gbxView = new System.Windows.Forms.GroupBox();
-            this.gbxView_tlpViewOptions = new System.Windows.Forms.TableLayoutPanel();
-            this.tlpViewOptions_lblType = new System.Windows.Forms.Label();
-            this.tlpViewOptions_lblName = new System.Windows.Forms.Label();
-            this.tlpViewOptions_lblOverwrite = new System.Windows.Forms.Label();
-            this.tlpViewOptions_lblFilter = new System.Windows.Forms.Label();
-            this.tlpViewOptions_cmbType = new System.Windows.Forms.ComboBox();
-            this.tlpViewOptions_cmbOverwrite = new System.Windows.Forms.ComboBox();
-            this.tlpViewOptions_cmbFilter = new System.Windows.Forms.ComboBox();
-            this.tlpViewOptions_txtName = new System.Windows.Forms.TextBox();
-            this.tlpMain_gbxColumn = new System.Windows.Forms.GroupBox();
+            this.tlpMain_tlpRight = new System.Windows.Forms.TableLayoutPanel();
+            this.tlpRight_gbxColumn = new System.Windows.Forms.GroupBox();
             this.gbxColumn_tlpColumn = new System.Windows.Forms.TableLayoutPanel();
             this.tlpColumn_tlpCommands = new System.Windows.Forms.TableLayoutPanel();
             this.tlpCommands_gbxPosition = new System.Windows.Forms.GroupBox();
@@ -145,19 +138,28 @@
             this.lvwColumns_colOrder = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.lvwColumns_colWidth = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tlpColumn_lblNote = new System.Windows.Forms.Label();
+            this.tlpRight_gbxView = new System.Windows.Forms.GroupBox();
+            this.gbxView_tlpViewOptions = new System.Windows.Forms.TableLayoutPanel();
+            this.tlpViewOptions_lblType = new System.Windows.Forms.Label();
+            this.tlpViewOptions_lblName = new System.Windows.Forms.Label();
+            this.tlpViewOptions_lblOverwrite = new System.Windows.Forms.Label();
+            this.tlpViewOptions_lblFilter = new System.Windows.Forms.Label();
+            this.tlpViewOptions_cmbType = new System.Windows.Forms.ComboBox();
+            this.tlpViewOptions_cmbOverwrite = new System.Windows.Forms.ComboBox();
+            this.tlpViewOptions_cmbFilter = new System.Windows.Forms.ComboBox();
+            this.tlpViewOptions_txtName = new System.Windows.Forms.TextBox();
             this.cmbOverwrite_tip = new System.Windows.Forms.ToolTip(this.components);
             this.txtName_tip = new System.Windows.Forms.ToolTip(this.components);
-            this.ddbExport_itemLoadXML = new System.Windows.Forms.ToolStripMenuItem();
             this.tsmMain.SuspendLayout();
             this.tlpMain.SuspendLayout();
-            this.tlpMain_gbxEntity.SuspendLayout();
+            this.tlpMain_tlpLeft.SuspendLayout();
+            this.tlpLeft_gbxEntity.SuspendLayout();
             this.gbxEntity_tlpEntity.SuspendLayout();
             this.tlpEntity_tlpCommands.SuspendLayout();
             this.tlpCommands_gbxSelect.SuspendLayout();
             this.gbxSelect_tlpSelect.SuspendLayout();
-            this.tlpMain_gbxView.SuspendLayout();
-            this.gbxView_tlpViewOptions.SuspendLayout();
-            this.tlpMain_gbxColumn.SuspendLayout();
+            this.tlpMain_tlpRight.SuspendLayout();
+            this.tlpRight_gbxColumn.SuspendLayout();
             this.gbxColumn_tlpColumn.SuspendLayout();
             this.tlpColumn_tlpCommands.SuspendLayout();
             this.tlpCommands_gbxPosition.SuspendLayout();
@@ -169,6 +171,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.tlpWidth_sudWidthValue)).BeginInit();
             this.tlpCommands_gbxProcess.SuspendLayout();
             this.gbxProcess_tlpProcess.SuspendLayout();
+            this.tlpRight_gbxView.SuspendLayout();
+            this.gbxView_tlpViewOptions.SuspendLayout();
             this.SuspendLayout();
             // 
             // tsmMain
@@ -229,16 +233,23 @@
             // ddbExport_itemAll
             // 
             this.ddbExport_itemAll.Name = "ddbExport_itemAll";
-            this.ddbExport_itemAll.Size = new System.Drawing.Size(180, 22);
-            this.ddbExport_itemAll.Text = "All";
+            this.ddbExport_itemAll.Size = new System.Drawing.Size(220, 22);
+            this.ddbExport_itemAll.Text = "All Views";
             this.ddbExport_itemAll.Click += new System.EventHandler(this.ddbExport_itemAll_Click);
             // 
             // ddbExport_itemSelectedEntities
             // 
             this.ddbExport_itemSelectedEntities.Name = "ddbExport_itemSelectedEntities";
-            this.ddbExport_itemSelectedEntities.Size = new System.Drawing.Size(180, 22);
-            this.ddbExport_itemSelectedEntities.Text = "Selected Entities";
+            this.ddbExport_itemSelectedEntities.Size = new System.Drawing.Size(220, 22);
+            this.ddbExport_itemSelectedEntities.Text = "Views from Selected Entities";
             this.ddbExport_itemSelectedEntities.Click += new System.EventHandler(this.ddbExport_itemSelectedEntities_Click);
+            // 
+            // ddbExport_itemLoadXML
+            // 
+            this.ddbExport_itemLoadXML.Name = "ddbExport_itemLoadXML";
+            this.ddbExport_itemLoadXML.Size = new System.Drawing.Size(220, 22);
+            this.ddbExport_itemLoadXML.Text = "Load XML";
+            this.ddbExport_itemLoadXML.Click += new System.EventHandler(this.ddbExport_itemLoadXML_Click);
             // 
             // tsmMain_sep3
             // 
@@ -249,7 +260,7 @@
             // 
             this.tsmMain_ddbSaveAs.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ddbSaveAs_itemPublic,
-            this.ddbSaveAs_itemPersonal});
+            this.ddbSaveAs_itemUser});
             this.tsmMain_ddbSaveAs.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsmMain_ddbSaveAs.Name = "tsmMain_ddbSaveAs";
             this.tsmMain_ddbSaveAs.Size = new System.Drawing.Size(229, 22);
@@ -259,16 +270,16 @@
             // ddbSaveAs_itemPublic
             // 
             this.ddbSaveAs_itemPublic.Name = "ddbSaveAs_itemPublic";
-            this.ddbSaveAs_itemPublic.Size = new System.Drawing.Size(163, 22);
+            this.ddbSaveAs_itemPublic.Size = new System.Drawing.Size(151, 22);
             this.ddbSaveAs_itemPublic.Text = "As Public View";
             this.ddbSaveAs_itemPublic.Click += new System.EventHandler(this.ddbSaveAs_itemPublic_Click);
             // 
-            // ddbSaveAs_itemPersonal
+            // ddbSaveAs_itemUser
             // 
-            this.ddbSaveAs_itemPersonal.Name = "ddbSaveAs_itemPersonal";
-            this.ddbSaveAs_itemPersonal.Size = new System.Drawing.Size(163, 22);
-            this.ddbSaveAs_itemPersonal.Text = "As Personal View";
-            this.ddbSaveAs_itemPersonal.Click += new System.EventHandler(this.ddbSaveAs_itemPersonal_Click);
+            this.ddbSaveAs_itemUser.Name = "ddbSaveAs_itemUser";
+            this.ddbSaveAs_itemUser.Size = new System.Drawing.Size(151, 22);
+            this.ddbSaveAs_itemUser.Text = "As User View";
+            this.ddbSaveAs_itemUser.Click += new System.EventHandler(this.ddbSaveAs_itemUser_Click);
             // 
             // tlpMain
             // 
@@ -276,29 +287,42 @@
             this.tlpMain.ColumnCount = 2;
             this.tlpMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tlpMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tlpMain.Controls.Add(this.tlpMain_gbxEntity, 0, 0);
-            this.tlpMain.Controls.Add(this.tlpMain_gbxView, 1, 0);
-            this.tlpMain.Controls.Add(this.tlpMain_gbxColumn, 1, 1);
+            this.tlpMain.Controls.Add(this.tlpMain_tlpLeft, 0, 0);
+            this.tlpMain.Controls.Add(this.tlpMain_tlpRight, 1, 0);
             this.tlpMain.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlpMain.Location = new System.Drawing.Point(0, 25);
             this.tlpMain.Name = "tlpMain";
-            this.tlpMain.RowCount = 2;
-            this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tlpMain.RowCount = 1;
+            this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
+            this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tlpMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tlpMain.Size = new System.Drawing.Size(960, 515);
             this.tlpMain.TabIndex = 5;
             // 
-            // tlpMain_gbxEntity
+            // tlpMain_tlpLeft
             // 
-            this.tlpMain_gbxEntity.Controls.Add(this.gbxEntity_tlpEntity);
-            this.tlpMain_gbxEntity.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpMain_gbxEntity.Location = new System.Drawing.Point(3, 3);
-            this.tlpMain_gbxEntity.Name = "tlpMain_gbxEntity";
-            this.tlpMain.SetRowSpan(this.tlpMain_gbxEntity, 2);
-            this.tlpMain_gbxEntity.Size = new System.Drawing.Size(474, 509);
-            this.tlpMain_gbxEntity.TabIndex = 2;
-            this.tlpMain_gbxEntity.TabStop = false;
-            this.tlpMain_gbxEntity.Text = "Entity*";
+            this.tlpMain_tlpLeft.ColumnCount = 1;
+            this.tlpMain_tlpLeft.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tlpMain_tlpLeft.Controls.Add(this.tlpLeft_gbxEntity, 0, 0);
+            this.tlpMain_tlpLeft.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tlpMain_tlpLeft.Location = new System.Drawing.Point(3, 3);
+            this.tlpMain_tlpLeft.Name = "tlpMain_tlpLeft";
+            this.tlpMain_tlpLeft.RowCount = 1;
+            this.tlpMain_tlpLeft.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tlpMain_tlpLeft.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 509F));
+            this.tlpMain_tlpLeft.Size = new System.Drawing.Size(474, 509);
+            this.tlpMain_tlpLeft.TabIndex = 5;
+            // 
+            // tlpLeft_gbxEntity
+            // 
+            this.tlpLeft_gbxEntity.Controls.Add(this.gbxEntity_tlpEntity);
+            this.tlpLeft_gbxEntity.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tlpLeft_gbxEntity.Location = new System.Drawing.Point(3, 3);
+            this.tlpLeft_gbxEntity.Name = "tlpLeft_gbxEntity";
+            this.tlpLeft_gbxEntity.Size = new System.Drawing.Size(468, 503);
+            this.tlpLeft_gbxEntity.TabIndex = 2;
+            this.tlpLeft_gbxEntity.TabStop = false;
+            this.tlpLeft_gbxEntity.Text = "Entity";
             // 
             // gbxEntity_tlpEntity
             // 
@@ -314,7 +338,7 @@
             this.gbxEntity_tlpEntity.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.gbxEntity_tlpEntity.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.gbxEntity_tlpEntity.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.gbxEntity_tlpEntity.Size = new System.Drawing.Size(468, 491);
+            this.gbxEntity_tlpEntity.Size = new System.Drawing.Size(462, 485);
             this.gbxEntity_tlpEntity.TabIndex = 0;
             // 
             // tlpEntity_lvwEntities
@@ -332,7 +356,7 @@
             this.tlpEntity_lvwEntities.HideSelection = false;
             this.tlpEntity_lvwEntities.Location = new System.Drawing.Point(3, 91);
             this.tlpEntity_lvwEntities.Name = "tlpEntity_lvwEntities";
-            this.tlpEntity_lvwEntities.Size = new System.Drawing.Size(462, 397);
+            this.tlpEntity_lvwEntities.Size = new System.Drawing.Size(456, 397);
             this.tlpEntity_lvwEntities.TabIndex = 1;
             this.tlpEntity_lvwEntities.UseCompatibleStateImageBehavior = false;
             this.tlpEntity_lvwEntities.View = System.Windows.Forms.View.Details;
@@ -364,10 +388,10 @@
             this.tlpEntity_lblNote.Location = new System.Drawing.Point(3, 3);
             this.tlpEntity_lblNote.Margin = new System.Windows.Forms.Padding(3);
             this.tlpEntity_lblNote.Name = "tlpEntity_lblNote";
-            this.tlpEntity_lblNote.Size = new System.Drawing.Size(462, 24);
+            this.tlpEntity_lblNote.Size = new System.Drawing.Size(456, 24);
             this.tlpEntity_lblNote.TabIndex = 4;
-            this.tlpEntity_lblNote.Text = "*IsValidForAdvancedFind = false means the entity won\'t appear in Advanced Find an" +
-    "d personal views cannot be created for it.";
+            this.tlpEntity_lblNote.Text = "IsValidForAdvancedFind = false means the entity won\'t appear in Advanced Find and" +
+    " personal views cannot be created for it.";
             // 
             // tlpEntity_tlpCommands
             // 
@@ -381,7 +405,7 @@
             this.tlpEntity_tlpCommands.Name = "tlpEntity_tlpCommands";
             this.tlpEntity_tlpCommands.RowCount = 1;
             this.tlpEntity_tlpCommands.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tlpEntity_tlpCommands.Size = new System.Drawing.Size(462, 52);
+            this.tlpEntity_tlpCommands.Size = new System.Drawing.Size(456, 52);
             this.tlpEntity_tlpCommands.TabIndex = 5;
             // 
             // tlpCommands_gbxSelect
@@ -436,145 +460,32 @@
             this.tlpSelect_btnSelectAll.UseVisualStyleBackColor = true;
             this.tlpSelect_btnSelectAll.Click += new System.EventHandler(this.tlpSelect_btnSelectAll_Click);
             // 
-            // tlpMain_gbxView
+            // tlpMain_tlpRight
             // 
-            this.tlpMain_gbxView.AutoSize = true;
-            this.tlpMain_gbxView.Controls.Add(this.gbxView_tlpViewOptions);
-            this.tlpMain_gbxView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpMain_gbxView.Location = new System.Drawing.Point(483, 3);
-            this.tlpMain_gbxView.Name = "tlpMain_gbxView";
-            this.tlpMain_gbxView.Size = new System.Drawing.Size(474, 121);
-            this.tlpMain_gbxView.TabIndex = 3;
-            this.tlpMain_gbxView.TabStop = false;
-            this.tlpMain_gbxView.Text = "View";
+            this.tlpMain_tlpRight.ColumnCount = 1;
+            this.tlpMain_tlpRight.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tlpMain_tlpRight.Controls.Add(this.tlpRight_gbxColumn, 0, 1);
+            this.tlpMain_tlpRight.Controls.Add(this.tlpRight_gbxView, 0, 0);
+            this.tlpMain_tlpRight.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tlpMain_tlpRight.Location = new System.Drawing.Point(483, 3);
+            this.tlpMain_tlpRight.Name = "tlpMain_tlpRight";
+            this.tlpMain_tlpRight.RowCount = 2;
+            this.tlpMain_tlpRight.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tlpMain_tlpRight.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tlpMain_tlpRight.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tlpMain_tlpRight.Size = new System.Drawing.Size(474, 509);
+            this.tlpMain_tlpRight.TabIndex = 6;
             // 
-            // gbxView_tlpViewOptions
+            // tlpRight_gbxColumn
             // 
-            this.gbxView_tlpViewOptions.AutoSize = true;
-            this.gbxView_tlpViewOptions.ColumnCount = 2;
-            this.gbxView_tlpViewOptions.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.gbxView_tlpViewOptions.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_lblType, 0, 0);
-            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_lblName, 0, 1);
-            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_lblOverwrite, 0, 2);
-            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_lblFilter, 0, 3);
-            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_cmbType, 1, 0);
-            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_cmbOverwrite, 1, 2);
-            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_cmbFilter, 1, 3);
-            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_txtName, 1, 1);
-            this.gbxView_tlpViewOptions.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.gbxView_tlpViewOptions.Location = new System.Drawing.Point(3, 15);
-            this.gbxView_tlpViewOptions.Name = "gbxView_tlpViewOptions";
-            this.gbxView_tlpViewOptions.RowCount = 4;
-            this.gbxView_tlpViewOptions.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.gbxView_tlpViewOptions.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.gbxView_tlpViewOptions.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.gbxView_tlpViewOptions.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.gbxView_tlpViewOptions.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            this.gbxView_tlpViewOptions.Size = new System.Drawing.Size(468, 103);
-            this.gbxView_tlpViewOptions.TabIndex = 1;
-            // 
-            // tlpViewOptions_lblType
-            // 
-            this.tlpViewOptions_lblType.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.tlpViewOptions_lblType.AutoSize = true;
-            this.tlpViewOptions_lblType.Location = new System.Drawing.Point(3, 7);
-            this.tlpViewOptions_lblType.Name = "tlpViewOptions_lblType";
-            this.tlpViewOptions_lblType.Size = new System.Drawing.Size(30, 12);
-            this.tlpViewOptions_lblType.TabIndex = 0;
-            this.tlpViewOptions_lblType.Text = "Type";
-            // 
-            // tlpViewOptions_lblName
-            // 
-            this.tlpViewOptions_lblName.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.tlpViewOptions_lblName.AutoSize = true;
-            this.tlpViewOptions_lblName.Location = new System.Drawing.Point(3, 32);
-            this.tlpViewOptions_lblName.Name = "tlpViewOptions_lblName";
-            this.tlpViewOptions_lblName.Size = new System.Drawing.Size(34, 12);
-            this.tlpViewOptions_lblName.TabIndex = 1;
-            this.tlpViewOptions_lblName.Text = "Name";
-            // 
-            // tlpViewOptions_lblOverwrite
-            // 
-            this.tlpViewOptions_lblOverwrite.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.tlpViewOptions_lblOverwrite.AutoSize = true;
-            this.tlpViewOptions_lblOverwrite.Location = new System.Drawing.Point(3, 58);
-            this.tlpViewOptions_lblOverwrite.Name = "tlpViewOptions_lblOverwrite";
-            this.tlpViewOptions_lblOverwrite.Size = new System.Drawing.Size(54, 12);
-            this.tlpViewOptions_lblOverwrite.TabIndex = 2;
-            this.tlpViewOptions_lblOverwrite.Text = "Overwrite";
-            // 
-            // tlpViewOptions_lblFilter
-            // 
-            this.tlpViewOptions_lblFilter.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.tlpViewOptions_lblFilter.AutoSize = true;
-            this.tlpViewOptions_lblFilter.Location = new System.Drawing.Point(3, 84);
-            this.tlpViewOptions_lblFilter.Name = "tlpViewOptions_lblFilter";
-            this.tlpViewOptions_lblFilter.Size = new System.Drawing.Size(32, 12);
-            this.tlpViewOptions_lblFilter.TabIndex = 3;
-            this.tlpViewOptions_lblFilter.Text = "Filter";
-            // 
-            // tlpViewOptions_cmbType
-            // 
-            this.tlpViewOptions_cmbType.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpViewOptions_cmbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.tlpViewOptions_cmbType.FormattingEnabled = true;
-            this.tlpViewOptions_cmbType.Items.AddRange(new object[] {
-            "0: User view",
-            "1: Public view"});
-            this.tlpViewOptions_cmbType.Location = new System.Drawing.Point(63, 3);
-            this.tlpViewOptions_cmbType.Name = "tlpViewOptions_cmbType";
-            this.tlpViewOptions_cmbType.Size = new System.Drawing.Size(403, 20);
-            this.tlpViewOptions_cmbType.TabIndex = 4;
-            // 
-            // tlpViewOptions_cmbOverwrite
-            // 
-            this.tlpViewOptions_cmbOverwrite.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpViewOptions_cmbOverwrite.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.tlpViewOptions_cmbOverwrite.Enabled = false;
-            this.tlpViewOptions_cmbOverwrite.FormattingEnabled = true;
-            this.tlpViewOptions_cmbOverwrite.Items.AddRange(new object[] {
-            "0: Disable overwrite",
-            "1: Enable overwrite"});
-            this.tlpViewOptions_cmbOverwrite.Location = new System.Drawing.Point(63, 54);
-            this.tlpViewOptions_cmbOverwrite.Name = "tlpViewOptions_cmbOverwrite";
-            this.tlpViewOptions_cmbOverwrite.Size = new System.Drawing.Size(403, 20);
-            this.tlpViewOptions_cmbOverwrite.TabIndex = 6;
-            // 
-            // tlpViewOptions_cmbFilter
-            // 
-            this.tlpViewOptions_cmbFilter.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpViewOptions_cmbFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.tlpViewOptions_cmbFilter.FormattingEnabled = true;
-            this.tlpViewOptions_cmbFilter.Items.AddRange(new object[] {
-            "0: All (No filter)",
-            "1: Active only",
-            "2: Inactive only"});
-            this.tlpViewOptions_cmbFilter.Location = new System.Drawing.Point(63, 80);
-            this.tlpViewOptions_cmbFilter.Name = "tlpViewOptions_cmbFilter";
-            this.tlpViewOptions_cmbFilter.Size = new System.Drawing.Size(403, 20);
-            this.tlpViewOptions_cmbFilter.TabIndex = 7;
-            // 
-            // tlpViewOptions_txtName
-            // 
-            this.tlpViewOptions_txtName.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpViewOptions_txtName.Location = new System.Drawing.Point(63, 29);
-            this.tlpViewOptions_txtName.MaxLength = 100;
-            this.tlpViewOptions_txtName.Name = "tlpViewOptions_txtName";
-            this.tlpViewOptions_txtName.Size = new System.Drawing.Size(403, 19);
-            this.tlpViewOptions_txtName.TabIndex = 8;
-            this.tlpViewOptions_txtName.Text = "Audit Monitoring ({entityDisplayName})";
-            // 
-            // tlpMain_gbxColumn
-            // 
-            this.tlpMain_gbxColumn.Controls.Add(this.gbxColumn_tlpColumn);
-            this.tlpMain_gbxColumn.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpMain_gbxColumn.Location = new System.Drawing.Point(483, 130);
-            this.tlpMain_gbxColumn.Name = "tlpMain_gbxColumn";
-            this.tlpMain_gbxColumn.Size = new System.Drawing.Size(474, 382);
-            this.tlpMain_gbxColumn.TabIndex = 4;
-            this.tlpMain_gbxColumn.TabStop = false;
-            this.tlpMain_gbxColumn.Text = "Column*";
+            this.tlpRight_gbxColumn.Controls.Add(this.gbxColumn_tlpColumn);
+            this.tlpRight_gbxColumn.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tlpRight_gbxColumn.Location = new System.Drawing.Point(3, 130);
+            this.tlpRight_gbxColumn.Name = "tlpRight_gbxColumn";
+            this.tlpRight_gbxColumn.Size = new System.Drawing.Size(468, 376);
+            this.tlpRight_gbxColumn.TabIndex = 4;
+            this.tlpRight_gbxColumn.TabStop = false;
+            this.tlpRight_gbxColumn.Text = "Column";
             // 
             // gbxColumn_tlpColumn
             // 
@@ -591,7 +502,7 @@
             this.gbxColumn_tlpColumn.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.gbxColumn_tlpColumn.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.gbxColumn_tlpColumn.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.gbxColumn_tlpColumn.Size = new System.Drawing.Size(468, 364);
+            this.gbxColumn_tlpColumn.Size = new System.Drawing.Size(462, 358);
             this.gbxColumn_tlpColumn.TabIndex = 0;
             // 
             // tlpColumn_tlpCommands
@@ -612,7 +523,7 @@
             this.tlpColumn_tlpCommands.Name = "tlpColumn_tlpCommands";
             this.tlpColumn_tlpCommands.RowCount = 1;
             this.tlpColumn_tlpCommands.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tlpColumn_tlpCommands.Size = new System.Drawing.Size(462, 80);
+            this.tlpColumn_tlpCommands.Size = new System.Drawing.Size(456, 80);
             this.tlpColumn_tlpCommands.TabIndex = 3;
             // 
             // tlpCommands_gbxPosition
@@ -809,7 +720,7 @@
             this.tlpCommands_gbxProcess.AutoSize = true;
             this.tlpCommands_gbxProcess.Controls.Add(this.gbxProcess_tlpProcess);
             this.tlpCommands_gbxProcess.Dock = System.Windows.Forms.DockStyle.Right;
-            this.tlpCommands_gbxProcess.Location = new System.Drawing.Point(385, 3);
+            this.tlpCommands_gbxProcess.Location = new System.Drawing.Point(379, 3);
             this.tlpCommands_gbxProcess.Name = "tlpCommands_gbxProcess";
             this.tlpCommands_gbxProcess.Size = new System.Drawing.Size(74, 74);
             this.tlpCommands_gbxProcess.TabIndex = 9;
@@ -856,41 +767,41 @@
             this.tlpColumn_lvwColumns.FullRowSelect = true;
             this.tlpColumn_lvwColumns.GridLines = true;
             this.tlpColumn_lvwColumns.HideSelection = false;
-            listViewItem12.Checked = true;
-            listViewItem12.StateImageIndex = 1;
-            listViewItem13.Checked = true;
-            listViewItem13.StateImageIndex = 1;
-            listViewItem14.StateImageIndex = 0;
-            listViewItem15.Checked = true;
-            listViewItem15.StateImageIndex = 1;
-            listViewItem16.Checked = true;
-            listViewItem16.StateImageIndex = 1;
-            listViewItem17.StateImageIndex = 0;
-            listViewItem18.Checked = true;
-            listViewItem18.StateImageIndex = 1;
-            listViewItem19.Checked = true;
-            listViewItem19.StateImageIndex = 1;
-            listViewItem20.Checked = true;
-            listViewItem20.StateImageIndex = 1;
-            listViewItem21.Checked = true;
-            listViewItem21.StateImageIndex = 1;
-            listViewItem22.Checked = true;
-            listViewItem22.StateImageIndex = 1;
+            listViewItem1.Checked = true;
+            listViewItem1.StateImageIndex = 1;
+            listViewItem2.Checked = true;
+            listViewItem2.StateImageIndex = 1;
+            listViewItem3.StateImageIndex = 0;
+            listViewItem4.Checked = true;
+            listViewItem4.StateImageIndex = 1;
+            listViewItem5.Checked = true;
+            listViewItem5.StateImageIndex = 1;
+            listViewItem6.StateImageIndex = 0;
+            listViewItem7.Checked = true;
+            listViewItem7.StateImageIndex = 1;
+            listViewItem8.Checked = true;
+            listViewItem8.StateImageIndex = 1;
+            listViewItem9.Checked = true;
+            listViewItem9.StateImageIndex = 1;
+            listViewItem10.Checked = true;
+            listViewItem10.StateImageIndex = 1;
+            listViewItem11.Checked = true;
+            listViewItem11.StateImageIndex = 1;
             this.tlpColumn_lvwColumns.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem12,
-            listViewItem13,
-            listViewItem14,
-            listViewItem15,
-            listViewItem16,
-            listViewItem17,
-            listViewItem18,
-            listViewItem19,
-            listViewItem20,
-            listViewItem21,
-            listViewItem22});
+            listViewItem1,
+            listViewItem2,
+            listViewItem3,
+            listViewItem4,
+            listViewItem5,
+            listViewItem6,
+            listViewItem7,
+            listViewItem8,
+            listViewItem9,
+            listViewItem10,
+            listViewItem11});
             this.tlpColumn_lvwColumns.Location = new System.Drawing.Point(3, 116);
             this.tlpColumn_lvwColumns.Name = "tlpColumn_lvwColumns";
-            this.tlpColumn_lvwColumns.Size = new System.Drawing.Size(462, 245);
+            this.tlpColumn_lvwColumns.Size = new System.Drawing.Size(456, 239);
             this.tlpColumn_lvwColumns.TabIndex = 2;
             this.tlpColumn_lvwColumns.UseCompatibleStateImageBehavior = false;
             this.tlpColumn_lvwColumns.View = System.Windows.Forms.View.Details;
@@ -924,17 +835,138 @@
             this.tlpColumn_lblNote.Location = new System.Drawing.Point(3, 3);
             this.tlpColumn_lblNote.Margin = new System.Windows.Forms.Padding(3, 3, 3, 0);
             this.tlpColumn_lblNote.Name = "tlpColumn_lblNote";
-            this.tlpColumn_lblNote.Size = new System.Drawing.Size(462, 24);
+            this.tlpColumn_lblNote.Size = new System.Drawing.Size(456, 24);
             this.tlpColumn_lblNote.TabIndex = 1;
-            this.tlpColumn_lblNote.Text = "*If the selected field does not exist in the entity, the view will still be creat" +
-    "ed, but the field will not be included.";
+            this.tlpColumn_lblNote.Text = "If the selected field does not exist in the entity, the view will still be create" +
+    "d, but the field will not be included.";
             // 
-            // ddbExport_itemLoadXML
+            // tlpRight_gbxView
             // 
-            this.ddbExport_itemLoadXML.Name = "ddbExport_itemLoadXML";
-            this.ddbExport_itemLoadXML.Size = new System.Drawing.Size(180, 22);
-            this.ddbExport_itemLoadXML.Text = "Load XML";
-            this.ddbExport_itemLoadXML.Click += new System.EventHandler(this.ddbExport_itemLoadXML_Click);
+            this.tlpRight_gbxView.AutoSize = true;
+            this.tlpRight_gbxView.Controls.Add(this.gbxView_tlpViewOptions);
+            this.tlpRight_gbxView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tlpRight_gbxView.Location = new System.Drawing.Point(3, 3);
+            this.tlpRight_gbxView.Name = "tlpRight_gbxView";
+            this.tlpRight_gbxView.Size = new System.Drawing.Size(468, 121);
+            this.tlpRight_gbxView.TabIndex = 3;
+            this.tlpRight_gbxView.TabStop = false;
+            this.tlpRight_gbxView.Text = "View";
+            // 
+            // gbxView_tlpViewOptions
+            // 
+            this.gbxView_tlpViewOptions.AutoSize = true;
+            this.gbxView_tlpViewOptions.ColumnCount = 2;
+            this.gbxView_tlpViewOptions.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.gbxView_tlpViewOptions.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_lblType, 0, 0);
+            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_lblName, 0, 1);
+            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_lblOverwrite, 0, 2);
+            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_lblFilter, 0, 3);
+            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_cmbType, 1, 0);
+            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_cmbOverwrite, 1, 2);
+            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_cmbFilter, 1, 3);
+            this.gbxView_tlpViewOptions.Controls.Add(this.tlpViewOptions_txtName, 1, 1);
+            this.gbxView_tlpViewOptions.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gbxView_tlpViewOptions.Location = new System.Drawing.Point(3, 15);
+            this.gbxView_tlpViewOptions.Name = "gbxView_tlpViewOptions";
+            this.gbxView_tlpViewOptions.RowCount = 4;
+            this.gbxView_tlpViewOptions.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.gbxView_tlpViewOptions.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.gbxView_tlpViewOptions.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.gbxView_tlpViewOptions.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.gbxView_tlpViewOptions.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.gbxView_tlpViewOptions.Size = new System.Drawing.Size(462, 103);
+            this.gbxView_tlpViewOptions.TabIndex = 1;
+            // 
+            // tlpViewOptions_lblType
+            // 
+            this.tlpViewOptions_lblType.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.tlpViewOptions_lblType.AutoSize = true;
+            this.tlpViewOptions_lblType.Location = new System.Drawing.Point(3, 7);
+            this.tlpViewOptions_lblType.Name = "tlpViewOptions_lblType";
+            this.tlpViewOptions_lblType.Size = new System.Drawing.Size(30, 12);
+            this.tlpViewOptions_lblType.TabIndex = 0;
+            this.tlpViewOptions_lblType.Text = "Type";
+            // 
+            // tlpViewOptions_lblName
+            // 
+            this.tlpViewOptions_lblName.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.tlpViewOptions_lblName.AutoSize = true;
+            this.tlpViewOptions_lblName.Location = new System.Drawing.Point(3, 32);
+            this.tlpViewOptions_lblName.Name = "tlpViewOptions_lblName";
+            this.tlpViewOptions_lblName.Size = new System.Drawing.Size(34, 12);
+            this.tlpViewOptions_lblName.TabIndex = 1;
+            this.tlpViewOptions_lblName.Text = "Name";
+            // 
+            // tlpViewOptions_lblOverwrite
+            // 
+            this.tlpViewOptions_lblOverwrite.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.tlpViewOptions_lblOverwrite.AutoSize = true;
+            this.tlpViewOptions_lblOverwrite.Location = new System.Drawing.Point(3, 58);
+            this.tlpViewOptions_lblOverwrite.Name = "tlpViewOptions_lblOverwrite";
+            this.tlpViewOptions_lblOverwrite.Size = new System.Drawing.Size(54, 12);
+            this.tlpViewOptions_lblOverwrite.TabIndex = 2;
+            this.tlpViewOptions_lblOverwrite.Text = "Overwrite";
+            // 
+            // tlpViewOptions_lblFilter
+            // 
+            this.tlpViewOptions_lblFilter.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.tlpViewOptions_lblFilter.AutoSize = true;
+            this.tlpViewOptions_lblFilter.Location = new System.Drawing.Point(3, 84);
+            this.tlpViewOptions_lblFilter.Name = "tlpViewOptions_lblFilter";
+            this.tlpViewOptions_lblFilter.Size = new System.Drawing.Size(32, 12);
+            this.tlpViewOptions_lblFilter.TabIndex = 3;
+            this.tlpViewOptions_lblFilter.Text = "Filter";
+            // 
+            // tlpViewOptions_cmbType
+            // 
+            this.tlpViewOptions_cmbType.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tlpViewOptions_cmbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.tlpViewOptions_cmbType.FormattingEnabled = true;
+            this.tlpViewOptions_cmbType.Items.AddRange(new object[] {
+            "0: User view",
+            "1: Public view"});
+            this.tlpViewOptions_cmbType.Location = new System.Drawing.Point(63, 3);
+            this.tlpViewOptions_cmbType.Name = "tlpViewOptions_cmbType";
+            this.tlpViewOptions_cmbType.Size = new System.Drawing.Size(403, 20);
+            this.tlpViewOptions_cmbType.TabIndex = 4;
+            // 
+            // tlpViewOptions_cmbOverwrite
+            // 
+            this.tlpViewOptions_cmbOverwrite.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tlpViewOptions_cmbOverwrite.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.tlpViewOptions_cmbOverwrite.Enabled = false;
+            this.tlpViewOptions_cmbOverwrite.FormattingEnabled = true;
+            this.tlpViewOptions_cmbOverwrite.Items.AddRange(new object[] {
+            "0: Disable overwrite",
+            "1: Enable overwrite"});
+            this.tlpViewOptions_cmbOverwrite.Location = new System.Drawing.Point(63, 54);
+            this.tlpViewOptions_cmbOverwrite.Name = "tlpViewOptions_cmbOverwrite";
+            this.tlpViewOptions_cmbOverwrite.Size = new System.Drawing.Size(403, 20);
+            this.tlpViewOptions_cmbOverwrite.TabIndex = 6;
+            // 
+            // tlpViewOptions_cmbFilter
+            // 
+            this.tlpViewOptions_cmbFilter.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tlpViewOptions_cmbFilter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.tlpViewOptions_cmbFilter.FormattingEnabled = true;
+            this.tlpViewOptions_cmbFilter.Items.AddRange(new object[] {
+            "0: All (No filter)",
+            "1: Active only",
+            "2: Inactive only"});
+            this.tlpViewOptions_cmbFilter.Location = new System.Drawing.Point(63, 80);
+            this.tlpViewOptions_cmbFilter.Name = "tlpViewOptions_cmbFilter";
+            this.tlpViewOptions_cmbFilter.Size = new System.Drawing.Size(403, 20);
+            this.tlpViewOptions_cmbFilter.TabIndex = 7;
+            // 
+            // tlpViewOptions_txtName
+            // 
+            this.tlpViewOptions_txtName.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tlpViewOptions_txtName.Location = new System.Drawing.Point(63, 29);
+            this.tlpViewOptions_txtName.MaxLength = 100;
+            this.tlpViewOptions_txtName.Name = "tlpViewOptions_txtName";
+            this.tlpViewOptions_txtName.Size = new System.Drawing.Size(403, 19);
+            this.tlpViewOptions_txtName.TabIndex = 8;
             // 
             // StandardViewCreatorControl
             // 
@@ -948,8 +980,8 @@
             this.tsmMain.ResumeLayout(false);
             this.tsmMain.PerformLayout();
             this.tlpMain.ResumeLayout(false);
-            this.tlpMain.PerformLayout();
-            this.tlpMain_gbxEntity.ResumeLayout(false);
+            this.tlpMain_tlpLeft.ResumeLayout(false);
+            this.tlpLeft_gbxEntity.ResumeLayout(false);
             this.gbxEntity_tlpEntity.ResumeLayout(false);
             this.gbxEntity_tlpEntity.PerformLayout();
             this.tlpEntity_tlpCommands.ResumeLayout(false);
@@ -958,12 +990,10 @@
             this.tlpCommands_gbxSelect.PerformLayout();
             this.gbxSelect_tlpSelect.ResumeLayout(false);
             this.gbxSelect_tlpSelect.PerformLayout();
-            this.tlpMain_gbxView.ResumeLayout(false);
-            this.tlpMain_gbxView.PerformLayout();
-            this.gbxView_tlpViewOptions.ResumeLayout(false);
-            this.gbxView_tlpViewOptions.PerformLayout();
-            this.tlpMain_gbxColumn.ResumeLayout(false);
-            this.tlpMain_gbxColumn.PerformLayout();
+            this.tlpMain_tlpRight.ResumeLayout(false);
+            this.tlpMain_tlpRight.PerformLayout();
+            this.tlpRight_gbxColumn.ResumeLayout(false);
+            this.tlpRight_gbxColumn.PerformLayout();
             this.gbxColumn_tlpColumn.ResumeLayout(false);
             this.gbxColumn_tlpColumn.PerformLayout();
             this.tlpColumn_tlpCommands.ResumeLayout(false);
@@ -985,6 +1015,10 @@
             this.tlpCommands_gbxProcess.PerformLayout();
             this.gbxProcess_tlpProcess.ResumeLayout(false);
             this.gbxProcess_tlpProcess.PerformLayout();
+            this.tlpRight_gbxView.ResumeLayout(false);
+            this.tlpRight_gbxView.PerformLayout();
+            this.gbxView_tlpViewOptions.ResumeLayout(false);
+            this.gbxView_tlpViewOptions.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1019,9 +1053,9 @@
         private System.Windows.Forms.Button tlpPosition_btnDown;
         private System.Windows.Forms.Button tlpProcess_btnCreate;
         private System.Windows.Forms.TextBox tlpViewOptions_txtName;
-        private System.Windows.Forms.GroupBox tlpMain_gbxEntity;
-        private System.Windows.Forms.GroupBox tlpMain_gbxView;
-        private System.Windows.Forms.GroupBox tlpMain_gbxColumn;
+        private System.Windows.Forms.GroupBox tlpLeft_gbxEntity;
+        private System.Windows.Forms.GroupBox tlpRight_gbxView;
+        private System.Windows.Forms.GroupBox tlpRight_gbxColumn;
         private System.Windows.Forms.Button tlpSelect_btnSelectAll;
         private System.Windows.Forms.Button tlpSelect_btnUnselectAll;
         private System.Windows.Forms.TableLayoutPanel gbxEntity_tlpEntity;
@@ -1053,7 +1087,9 @@
         private System.Windows.Forms.ToolStripSeparator tsmMain_sep3;
         private System.Windows.Forms.ToolStripDropDownButton tsmMain_ddbSaveAs;
         private System.Windows.Forms.ToolStripMenuItem ddbSaveAs_itemPublic;
-        private System.Windows.Forms.ToolStripMenuItem ddbSaveAs_itemPersonal;
+        private System.Windows.Forms.ToolStripMenuItem ddbSaveAs_itemUser;
         private System.Windows.Forms.ToolStripMenuItem ddbExport_itemLoadXML;
+        private System.Windows.Forms.TableLayoutPanel tlpMain_tlpLeft;
+        private System.Windows.Forms.TableLayoutPanel tlpMain_tlpRight;
     }
 }
